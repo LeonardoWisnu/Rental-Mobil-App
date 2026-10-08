@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoRent Pro | Sistem Manajemen Rental</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .modal-enter { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 h-screen overflow-hidden">
+
+    <!-- ================= HALAMAN AUTENTIKASI (LOGIN & REGISTER) ================= -->
+    <div id="auth-page" class="h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-700 overflow-y-auto py-10">
+        <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md m-auto">
+            <div class="text-center mb-8">
+                <i class="fas fa-car text-4xl text-blue-600 mb-3"></i>
+                <h2 class="text-2xl font-bold text-gray-800">AutoRent Pro</h2>
+                <p class="text-gray-500 text-sm" id="auth-subtitle">Silakan login untuk masuk ke sistem</p>
+            </div>
+            <div id="auth-alert" class="hidden p-3 rounded mb-4 text-sm text-center font-medium"></div>
+
+            <!-- Form Login -->
+            <div id="form-login" class="space-y-4">
+                <input type="text" id="login-username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Username Anda">
+                <input type="password" id="login-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Password Anda">
+                <button onclick="prosesLogin()" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition shadow-lg">Masuk</button>
+                <div class="text-center mt-4 text-sm text-gray-600">
+                    Belum punya akun? <button onclick="toggleAuth('register')" class="text-blue-600 font-bold hover:underline">Daftar Akun</button>
+                </div>
+            </div>
+
+            <!-- Form Register Pertama Kali (Bebas Role) -->
+            <div id="form-register" class="space-y-4 hidden">
+                <input type="text" id="reg-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nama Lengkap">
+                <input type="text" id="reg-username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Username Baru">
+                <input type="password" id="reg-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Password">
+                <select id="reg-role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="admin">Admin Operasional</option>
+                    <option value="pemilik">Pemilik (Full Access)</option>
+                </select>
+                <button onclick="prosesRegister()" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition shadow-lg">Buat Akun</button>
+                <div class="text-center mt-4 text-sm text-gray-600">
+                    Sudah punya akun? <button onclick="toggleAuth('login')" class="text-blue-600 font-bold hover:underline">Kembali Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= HALAMAN UTAMA APLIKASI ================= -->
+    <div id="main-app" class="hidden h-screen flex relative">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-blue-900 text-white flex flex-col shadow-xl z-20">
+            <div class="p-6 text-2xl font-bold border-b border-blue-800 flex items-center">
+                <i class="fas fa-car mr-3 text-blue-300"></i> AutoRent
+            </div>
+            <div class="p-4 border-b border-blue-800 bg-blue-800">
+                <p class="text-xs text-blue-300 uppercase tracking-wider mb-1">Pengguna Aktif:</p>
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-white text-blue-900 flex items-center justify-center font-bold" id="user-initial">A</div>
+                    <div>
+                        <p class="font-bold text-sm truncate w-40" id="user-name">Nama User</p>
+                        <p class="text-xs text-blue-200 capitalize" id="user-role">Role</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <button onclick="changeMenu('dashboard')" class="w-full text-left bg-blue-800 py-3 px-4 rounded-lg transition nav-btn flex items-center" id="nav-dashboard">
+                    <i class="fas fa-chart-pie w-6"></i> Dashboard
+                </button>
+                <button onclick="changeMenu('mobil')" class="w-full text-left py-3 px-4 rounded-lg hover:bg-blue-800 transition nav-btn flex items-center" id="nav-mobil">
+                    <i class="fas fa-car-side w-6"></i> Manajemen Armada
+                </button>
+                <button onclick="changeMenu('transaksi')" class="w-full text-left py-3 px-4 rounded-lg hover:bg-blue-800 transition nav-btn flex items-center" id="nav-transaksi">
+                    <i class="fas fa-file-invoice-dollar w-6"></i> Riwayat Transaksi
+                </button>
+                <!-- Menu Khusus Pemilik -->
+                <button onclick="changeMenu('pegawai')" class="w-full text-left py-3 px-4 rounded-lg hover:bg-blue-800 transition nav-btn flex items-center hidden" id="nav-pegawai">
+                    <i class="fas fa-users-cog w-6"></i> Manajemen Pegawai
+                </button>
+            </nav>
+            <div class="p-4 border-t border-blue-800">
+                <button onclick="prosesLogout()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded transition flex justify-center items-center">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Area Konten -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 relative">
+            <header class="bg-white shadow-sm p-5 flex justify-between items-center z-10">
+                <h2 class="text-2xl font-bold text-gray-800" id="page-title">Dashboard</h2>
+                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full border border-blue-200" id="header-role-badge">Admin Mode</span>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8 relative">
+                
+                <!-- KONTEN: DASHBOARD -->
+                <div id="sec-dashboard" class="content-section block space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded text-sm mb-4">
+                        <i class="fas fa-info-circle mr-2"></i> Kotak metrik bersifat interaktif. <b>Klik kotak</b> untuk melihat detail rincian data.
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div onclick="showDetail('total')" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition">
+                            <div class="p-3 bg-blue-100 text-blue-600 rounded-lg"><i class="fas fa-car text-2xl"></i></div>
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Total Armada</p>
+                                <h3 class="text-2xl font-bold text-gray-800" id="stat-total-mobil">0</h3>
+                            </div>
+                        </div>
+                        <div onclick="showDetail('ready')" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md hover:border-green-300 transition">
+                            <div class="p-3 bg-green-100 text-green-600 rounded-lg"><i class="fas fa-check-circle text-2xl"></i></div>
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Mobil Siap</p>
+                                <h3 class="text-2xl font-bold text-gray-800" id="stat-mobil-ready">0</h3>
+                            </div>
+                        </div>
+                        <div onclick="showDetail('rented')" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md hover:border-yellow-300 transition">
+                            <div class="p-3 bg-yellow-100 text-yellow-600 rounded-lg"><i class="fas fa-key text-2xl"></i></div>
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Sedang Disewa</p>
+                                <h3 class="text-2xl font-bold text-gray-800" id="stat-mobil-rented">0</h3>
+                            </div>
+                        </div>
+                        <div onclick="showDetail('omset')" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4 cursor-pointer hover:shadow-md hover:border-purple-300 transition">
+                            <div class="p-3 bg-purple-100 text-purple-600 rounded-lg"><i class="fas fa-wallet text-2xl"></i></div>
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium">Omset Pendapatan</p>
+                                <h3 class="text-xl font-bold text-gray-800" id="stat-pendapatan">Rp 0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KONTEN: DATA MOBIL -->
+                <div id="sec-mobil" class="content-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 class="font-bold text-gray-800 text-lg">Katalog Armada</h3>
+                            <button onclick="openModalMobil()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 shadow flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Register Mobil
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white text-gray-500 text-sm border-b uppercase tracking-wider">
+                                        <th class="p-4 font-semibold">Plat Nomor</th>
+                                        <th class="p-4 font-semibold">Merek / Tipe</th>
+                                        <th class="p-4 font-semibold">Tarif Harian</th>
+                                        <th class="p-4 font-semibold">Status</th>
+                                        <th class="p-4 font-semibold text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabel-mobil" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KONTEN: TRANSAKSI -->
+                <div id="sec-transaksi" class="content-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 class="font-bold text-gray-800 text-lg">Log Transaksi & Sewa</h3>
+                            <button onclick="openModalTrx()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 shadow flex items-center">
+                                <i class="fas fa-file-signature mr-2"></i> Buat Kontrak Sewa
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white text-gray-500 text-sm border-b uppercase tracking-wider">
+                                        <th class="p-4 font-semibold">ID / Tanggal</th>
+                                        <th class="p-4 font-semibold">Pelanggan</th>
+                                        <th class="p-4 font-semibold">Kendaraan</th>
+                                        <th class="p-4 font-semibold">Pendapatan</th>
+                                        <th class="p-4 font-semibold">Status</th>
+                                        <th class="p-4 font-semibold text-center">Aksi Sewa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabel-transaksi" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KONTEN: MANAJEMEN PEGAWAI (Hanya Pemilik) -->
+                <div id="sec-pegawai" class="content-section hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 class="font-bold text-gray-800 text-lg">Daftar Akun Sistem</h3>
+                            <button onclick="openModalPegawai()" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700 shadow flex items-center">
+                                <i class="fas fa-user-plus mr-2"></i> Tambah Akun
+                            </button>
+                        </div>
+                        <div class="bg-purple-50 px-6 py-3 border-b border-purple-100 text-sm text-purple-800">
+                            <i class="fas fa-lock mr-2"></i> Hanya <b>Pemilik</b> yang dapat melihat dan mengatur halaman ini.
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-white text-gray-500 text-sm border-b uppercase tracking-wider">
+                                        <th class="p-4 font-semibold">Username</th>
+                                        <th class="p-4 font-semibold">Nama Lengkap</th>
+                                        <th class="p-4 font-semibold">Hak Akses (Role)</th>
+                                        <th class="p-4 font-semibold text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabel-pegawai" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= KUMPULAN MODAL (POP-UP) ================= -->
+
+            <!-- 1. Modal Detail Dashboard -->
+            <div id="detail-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[80vh] modal-enter">
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                        <h3 class="font-bold text-gray-800 text-lg" id="modal-title">Detail Data</h3>
+                        <button onclick="closeModal('detail-modal')" class="text-gray-400 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-5 overflow-y-auto flex-1">
+                        <table class="w-full text-left border-collapse">
+                            <thead id="modal-thead" class="bg-gray-50 text-gray-500 text-xs border-b uppercase tracking-wider"></thead>
+                            <tbody id="modal-tbody" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-gray-100 text-right bg-gray-50 rounded-b-xl">
+                        <button onclick="closeModal('detail-modal')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded font-medium">Tutup</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Modal Register Mobil Baru -->
+            <div id="modal-add-mobil" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-md modal-enter">
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-blue-50 rounded-t-xl">
+                        <h3 class="font-bold text-blue-800 text-lg"><i class="fas fa-car mr-2"></i> Register Mobil Baru</h3>
+                        <button onclick="closeModal('modal-add-mobil')" class="text-gray-400 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <input type="text" id="input-plat" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 uppercase" placeholder="Plat Nomor (Contoh: B1234CD)">
+                        <input type="text" id="input-merk" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Merek & Tipe (Contoh: Honda HR-V)">
+                        <input type="number" id="input-harga" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Tarif Sewa Per Hari (Rp)">
+                    </div>
+                    <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end space-x-2">
+                        <button onclick="closeModal('modal-add-mobil')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded font-medium">Batal</button>
+                        <button onclick="simpanMobil()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">Simpan Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Modal Buat Kontrak Sewa -->
+            <div id="modal-add-trx" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-md modal-enter">
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-green-50 rounded-t-xl">
+                        <h3 class="font-bold text-green-800 text-lg"><i class="fas fa-file-signature mr-2"></i> Buat Kontrak Sewa</h3>
+                        <button onclick="closeModal('modal-add-trx')" class="text-gray-400 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <input type="text" id="input-pelanggan" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Nama Lengkap Pelanggan">
+                        <select id="input-pilih-mobil" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 bg-white"></select>
+                        <input type="number" id="input-hari" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Lama Sewa (Berapa Hari?)">
+                    </div>
+                    <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end space-x-2">
+                        <button onclick="closeModal('modal-add-trx')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded font-medium">Batal</button>
+                        <button onclick="simpanTransaksi()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium">Proses Sewa</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Modal Tambah Pegawai (Khusus Pemilik) -->
+            <div id="modal-add-pegawai" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-md modal-enter">
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-purple-50 rounded-t-xl">
+                        <h3 class="font-bold text-purple-800 text-lg"><i class="fas fa-user-plus mr-2"></i> Tambah Akun Pegawai</h3>
+                        <button onclick="closeModal('modal-add-pegawai')" class="text-gray-400 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <input type="text" id="input-peg-nama" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Nama Lengkap Pegawai">
+                        <input type="text" id="input-peg-user" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Buat Username">
+                        <input type="password" id="input-peg-pass" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Buat Password">
+                        <select id="input-peg-role" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="admin">Admin Operasional</option>
+                            <option value="pemilik">Pemilik (Full Access)</option>
+                        </select>
+                    </div>
+                    <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end space-x-2">
+                        <button onclick="closeModal('modal-add-pegawai')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded font-medium">Batal</button>
+                        <button onclick="simpanPegawai()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 font-medium">Simpan Akun</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= LOGIKA JAVASCRIPT ================= -->
+    <script>
+        // --- Inisialisasi Database Default ---
+        if (!localStorage.getItem('db_users')) {
+            localStorage.setItem('db_users', JSON.stringify({
+                'admin': { password: '123', role: 'admin', name: 'Admin Operasional' },
+                'owner': { password: '123', role: 'pemilik', name: 'Bpk. Pemilik Utama' }
+            }));
+        }
+
+        window.onload = () => {
+            if (localStorage.getItem('loggedUser')) {
+                showApp();
+                loadData();
+            }
+        };
+
+        // --- Fungsi Otentikasi ---
+        function toggleAuth(mode) {
+            document.getElementById('auth-alert').classList.add('hidden');
+            if (mode === 'register') {
+                document.getElementById('form-login').classList.add('hidden');
+                document.getElementById('form-register').classList.remove('hidden');
+                document.getElementById('auth-subtitle').innerText = "Buat akun baru untuk sistem";
+            } else {
+                document.getElementById('form-register').classList.add('hidden');
+                document.getElementById('form-login').classList.remove('hidden');
+                document.getElementById('auth-subtitle').innerText = "Silakan login untuk masuk ke sistem";
+            }
+        }
+
+        function showAlert(msg, isError = true) {
+            const box = document.getElementById('auth-alert');
+            box.innerText = msg;
+            box.className = `p-3 rounded mb-4 text-sm text-center font-medium block ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+        }
+
+        function prosesRegister() {
+            const name = document.getElementById('reg-name').value;
+            const user = document.getElementById('reg-username').value;
+            const pass = document.getElementById('reg-password').value;
+            const role = document.getElementById('reg-role').value;
+
+            if(!name || !user || !pass) return showAlert("Semua kolom wajib diisi!");
+            let users = JSON.parse(localStorage.getItem('db_users'));
+            if (users[user]) return showAlert("Username sudah terpakai!");
+
+            users[user] = { password: pass, role: role, name: name };
+            localStorage.setItem('db_users', JSON.stringify(users));
+            showAlert("Berhasil! Silakan login.", false);
+            setTimeout(() => toggleAuth('login'), 1500);
+        }
+
+        function prosesLogin() {
+            const user = document.getElementById('login-username').value;
+            const pass = document.getElementById('login-password').value;
+            let users = JSON.parse(localStorage.getItem('db_users'));
+            
+            if (users[user] && users[user].password === pass) {
+                // Simpan username juga untuk keperluan deletePegawai
+                let sessionData = users[user];
+                sessionData.username = user; 
+                localStorage.setItem('loggedUser', JSON.stringify(sessionData));
+                showApp();
+                loadData();
+            } else showAlert("Username atau password salah!");
+        }
+
+        function prosesLogout() {
+            localStorage.removeItem('loggedUser');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('auth-page').classList.remove('hidden');
+            document.getElementById('auth-page').classList.add('flex');
+            document.getElementById('login-password').value = '';
+        }
+
+        // --- Manajemen Tampilan Utama SPA ---
+        function showApp() {
+            document.getElementById('auth-page').classList.remove('flex');
+            document.getElementById('auth-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            const session = JSON.parse(localStorage.getItem('loggedUser'));
+            document.getElementById('user-name').innerText = session.name;
+            document.getElementById('user-role').innerText = session.role;
+            document.getElementById('user-initial').innerText = session.name.charAt(0).toUpperCase();
+            
+            // Pemilik memiliki akses ke SEMUANYA.
+            let isPemilik = session.role === 'pemilik';
+            
+            document.getElementById('header-role-badge').innerText = isPemilik ? "Mode Kepemilikan (Full Access)" : "Mode Operasional (Admin)";
+            document.getElementById('header-role-badge').className = isPemilik ? "bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full border border-purple-200 shadow-sm" : "bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full border border-blue-200";
+            
+            // Tampilkan menu pegawai HANYA jika rolenya pemilik
+            document.getElementById('nav-pegawai').style.display = isPemilik ? 'flex' : 'none';
+            
+            changeMenu('dashboard');
+        }
+
+        function changeMenu(menuName) {
+            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('bg-blue-800'));
+            document.getElementById('sec-' + menuName).classList.remove('hidden');
+            document.getElementById('nav-' + menuName).classList.add('bg-blue-800');
+            const titles = { 'dashboard': 'Dashboard', 'mobil': 'Manajemen Armada', 'transaksi': 'Riwayat Transaksi', 'pegawai': 'Manajemen Akun Pegawai' };
+            document.getElementById('page-title').innerText = titles[menuName];
+        }
+
+        // --- Render Data ke Tabel (Mobil, Transaksi, dan Pegawai) ---
+        function loadData() {
+            const mobil = JSON.parse(localStorage.getItem('db_mobil')) || [];
+            const transaksi = JSON.parse(localStorage.getItem('db_transaksi')) || [];
+            const usersDb = JSON.parse(localStorage.getItem('db_users')) || {};
+            const session = JSON.parse(localStorage.getItem('loggedUser'));
+            
+            let isPemilik = session.role === 'pemilik';
+
+            // Update Dashboard
+            const mobilReady = mobil.filter(m => m.status === 'Tersedia').length;
+            document.getElementById('stat-total-mobil').innerText = mobil.length;
+            document.getElementById('stat-mobil-ready').innerText = mobilReady;
+            document.getElementById('stat-mobil-rented').innerText = mobil.length - mobilReady;
+            document.getElementById('stat-pendapatan').innerText = 'Rp ' + transaksi.reduce((sum, trx) => sum + trx.total, 0).toLocaleString('id-ID');
+
+            // 1. Render Tabel Mobil (Keduanya bisa hapus)
+            let mobilHTML = '';
+            mobil.forEach(m => {
+                let badgeClass = m.status === 'Tersedia' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
+                mobilHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-4 font-bold text-gray-800">${m.plat}</td><td class="p-4">${m.merk}</td>
+                        <td class="p-4 font-medium">Rp ${m.harga.toLocaleString('id-ID')}</td>
+                        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${m.status}</span></td>
+                        <td class="p-4 text-center"><button onclick="deleteMobil(${m.id})" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded text-xs font-bold border border-red-200 transition"><i class="fas fa-trash"></i> Hapus</button></td>
+                    </tr>`;
+            });
+            document.getElementById('tabel-mobil').innerHTML = mobilHTML;
+
+            // 2. Render Tabel Transaksi (Keduanya bisa proses Selesai Sewa)
+            let trxHTML = '';
+            transaksi.forEach(t => {
+                let badgeClass = t.status === 'Berjalan' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700';
+                let btnSelesai = t.status === 'Berjalan' 
+                    ? `<button onclick="selesaiSewa('${t.id}', '${t.platMobil}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-sm"><i class="fas fa-check mr-1"></i>Selesai Sewa</button>` 
+                    : `<span class="text-gray-400 text-xs font-bold"><i class="fas fa-check-double mr-1"></i>Tuntas</span>`;
+                
+                trxHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-4"><div class="font-bold text-blue-600">${t.id}</div><div class="text-xs text-gray-400">${t.tgl}</div></td>
+                        <td class="p-4 font-medium">${t.pelanggan}</td><td class="p-4">${t.platMobil}</td>
+                        <td class="p-4 font-bold text-green-700">Rp ${t.total.toLocaleString('id-ID')}</td>
+                        <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">${t.status}</span></td>
+                        <td class="p-4 text-center">${btnSelesai}</td>
+                    </tr>`;
+            });
+            document.getElementById('tabel-transaksi').innerHTML = trxHTML;
+
+            // 3. Render Tabel Pegawai (Hanya untuk Pemilik)
+            if (isPemilik) {
+                let pegHTML = '';
+                for (let username in usersDb) {
+                    let u = usersDb[username];
+                    let roleBadge = u.role === 'pemilik' ? '<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold">Pemilik</span>' : '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">Admin</span>';
+                    
+                    // Cegah pemilik menghapus akunnya sendiri yang sedang dipakai
+                    let btnHapus = (username === session.username) 
+                        ? `<span class="text-gray-400 text-xs font-medium italic">Akun Anda</span>`
+                        : `<button onclick="deletePegawai('${username}')" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded text-xs font-bold border border-red-200 transition"><i class="fas fa-user-minus"></i> Hapus</button>`;
+                    
+                    pegHTML += `
+                        <tr class="hover:bg-gray-50 border-b border-gray-100">
+                            <td class="p-4 font-bold text-gray-700">@${username}</td>
+                            <td class="p-4">${u.name}</td>
+                            <td class="p-4">${roleBadge}</td>
+                            <td class="p-4 text-center">${btnHapus}</td>
+                        </tr>`;
+                }
+                document.getElementById('tabel-pegawai').innerHTML = pegHTML;
+            }
+        }
+
+        // --- Kontrol Modal Utama ---
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // --- Logika CRUD Mobil ---
+        function openModalMobil() {
+            document.getElementById('input-plat').value = '';
+            document.getElementById('input-merk').value = '';
+            document.getElementById('input-harga').value = '';
+            document.getElementById('modal-add-mobil').classList.remove('hidden');
+        }
+
+        function simpanMobil() {
+            let plat = document.getElementById('input-plat').value.toUpperCase().replace(/\s/g, '');
+            let merk = document.getElementById('input-merk').value;
+            let harga = document.getElementById('input-harga').value;
+            if (plat && merk && harga) {
+                let mobilData = JSON.parse(localStorage.getItem('db_mobil')) || [];
+                if(mobilData.find(m => m.plat === plat)) return alert("Plat nomor sudah terdaftar!");
+                mobilData.push({ id: Date.now(), plat: plat, merk: merk, harga: parseInt(harga), status: 'Tersedia' });
+                localStorage.setItem('db_mobil', JSON.stringify(mobilData));
+                closeModal('modal-add-mobil');
+                loadData();
+            } else alert("Mohon lengkapi data form.");
+        }
+
+        function deleteMobil(id) {
+            if (confirm("Hapus armada ini permanen?")) {
+                let mobilData = JSON.parse(localStorage.getItem('db_mobil'));
+                localStorage.setItem('db_mobil', JSON.stringify(mobilData.filter(m => m.id !== id)));
+                loadData();
+            }
+        }
+
+        // --- Logika CRUD Transaksi ---
+        function openModalTrx() {
+            document.getElementById('input-pelanggan').value = '';
+            document.getElementById('input-hari').value = '';
+            const mobilData = JSON.parse(localStorage.getItem('db_mobil')) || [];
+            const selectEl = document.getElementById('input-pilih-mobil');
+            selectEl.innerHTML = '<option value="">-- Pilih Kendaraan Tersedia --</option>';
+            let adaTersedia = false;
+            mobilData.forEach(m => {
+                if(m.status === 'Tersedia') {
+                    selectEl.innerHTML += `<option value="${m.plat}" data-harga="${m.harga}">${m.merk} (${m.plat}) - Rp ${m.harga.toLocaleString()}/hr</option>`;
+                    adaTersedia = true;
+                }
+            });
+            if(!adaTersedia) selectEl.innerHTML = '<option value="">Tidak ada mobil tersedia</option>';
+            document.getElementById('modal-add-trx').classList.remove('hidden');
+        }
+
+        function simpanTransaksi() {
+            let pelanggan = document.getElementById('input-pelanggan').value;
+            let hari = document.getElementById('input-hari').value;
+            let selectEl = document.getElementById('input-pilih-mobil');
+            let platSelected = selectEl.value;
+            if (!platSelected) return alert("Pilih mobil terlebih dahulu!");
+            let hargaPerHari = selectEl.options[selectEl.selectedIndex].getAttribute('data-harga');
+
+            if (pelanggan && hari) {
+                let totalSewa = parseInt(hari) * parseInt(hargaPerHari);
+                let trxData = JSON.parse(localStorage.getItem('db_transaksi')) || [];
+                trxData.push({ id: 'INV-' + Math.floor(Math.random() * 9000 + 1000), tgl: new Date().toLocaleDateString('id-ID'), pelanggan: pelanggan, platMobil: platSelected, total: totalSewa, status: 'Berjalan' });
+                
+                let mobilData = JSON.parse(localStorage.getItem('db_mobil'));
+                let indexMobil = mobilData.findIndex(m => m.plat === platSelected);
+                if(indexMobil !== -1) mobilData[indexMobil].status = 'Disewa';
+                
+                localStorage.setItem('db_mobil', JSON.stringify(mobilData));
+                localStorage.setItem('db_transaksi', JSON.stringify(trxData));
+                closeModal('modal-add-trx');
+                loadData();
+            } else alert("Lengkapi nama pelanggan dan lama sewa!");
+        }
+
+        function selesaiSewa(idTrx, platMobil) {
+            if(confirm("Tandai transaksi selesai dan mobil kembali tersedia?")) {
+                let trxData = JSON.parse(localStorage.getItem('db_transaksi'));
+                let tIndex = trxData.findIndex(t => t.id === idTrx);
+                if(tIndex !== -1) trxData[tIndex].status = 'Selesai';
+                localStorage.setItem('db_transaksi', JSON.stringify(trxData));
+
+                let mobilData = JSON.parse(localStorage.getItem('db_mobil'));
+                let mIndex = mobilData.findIndex(m => m.plat === platMobil);
+                if(mIndex !== -1) mobilData[mIndex].status = 'Tersedia';
+                localStorage.setItem('db_mobil', JSON.stringify(mobilData));
+                loadData();
+            }
+        }
+
+        // --- Logika CRUD Pegawai (Khusus Pemilik) ---
+        function openModalPegawai() {
+            document.getElementById('input-peg-nama').value = '';
+            document.getElementById('input-peg-user').value = '';
+            document.getElementById('input-peg-pass').value = '';
+            document.getElementById('modal-add-pegawai').classList.remove('hidden');
+        }
+
+        function simpanPegawai() {
+            let nama = document.getElementById('input-peg-nama').value;
+            let username = document.getElementById('input-peg-user').value;
+            let pass = document.getElementById('input-peg-pass').value;
+            let role = document.getElementById('input-peg-role').value;
+
+            if(nama && username && pass) {
+                let usersDb = JSON.parse(localStorage.getItem('db_users')) || {};
+                if(usersDb[username]) return alert("Username ini sudah dipakai pegawai lain!");
+                
+                usersDb[username] = { name: nama, password: pass, role: role };
+                localStorage.setItem('db_users', JSON.stringify(usersDb));
+                closeModal('modal-add-pegawai');
+                loadData();
+                alert("Akun pegawai berhasil ditambahkan.");
+            } else alert("Lengkapi semua form akun!");
+        }
+
+        function deletePegawai(usernameTarget) {
+            if(confirm(`Yakin ingin menghapus permanen akun @${usernameTarget}?`)) {
+                let usersDb = JSON.parse(localStorage.getItem('db_users'));
+                delete usersDb[usernameTarget];
+                localStorage.setItem('db_users', JSON.stringify(usersDb));
+                loadData();
+            }
+        }
+
+        // --- Modal Dashboard Detail ---
+        function showDetail(type) {
+            const mobil = JSON.parse(localStorage.getItem('db_mobil')) || [];
+            const transaksi = JSON.parse(localStorage.getItem('db_transaksi')) || [];
+            
+            document.getElementById('detail-modal').classList.remove('hidden');
+            const title = document.getElementById('modal-title');
+            const tbody = document.getElementById('modal-tbody');
+            const thead = document.getElementById('modal-thead');
+            
+            let html = '', head = '';
+            if (type === 'omset') {
+                title.innerText = "Riwayat Pendapatan";
+                head = `<tr><th class="p-3">ID</th><th class="p-3">Pelanggan</th><th class="p-3">Plat</th><th class="p-3">Total</th></tr>`;
+                transaksi.forEach(t => { html += `<tr><td class="p-3 font-bold">${t.id}</td><td class="p-3">${t.pelanggan}</td><td class="p-3">${t.platMobil}</td><td class="p-3 font-bold text-green-600">Rp ${t.total.toLocaleString()}</td></tr>`; });
+            } else {
+                let data = mobil;
+                if (type === 'ready') { title.innerText = "Mobil Siap Disewa"; data = mobil.filter(m => m.status === 'Tersedia'); }
+                else if (type === 'rented') { title.innerText = "Mobil Sedang Disewa"; data = mobil.filter(m => m.status === 'Disewa'); }
+                else { title.innerText = "Seluruh Armada"; }
+                
+                head = `<tr><th class="p-3">Plat</th><th class="p-3">Merek</th><th class="p-3">Tarif</th><th class="p-3">Status</th></tr>`;
+                data.forEach(m => { html += `<tr><td class="p-3 font-bold">${m.plat}</td><td class="p-3">${m.merk}</td><td class="p-3">Rp ${m.harga.toLocaleString()}</td><td class="p-3">${m.status}</td></tr>`; });
+            }
+            
+            document.getElementById('modal-thead').innerHTML = head;
+            tbody.innerHTML = html || `<tr><td colspan="4" class="p-5 text-center text-gray-500">Tidak ada data</td></tr>`;
+        }
+    </script>
+</body>
+</html>
