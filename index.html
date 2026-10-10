@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoRent Pro | Modern UI & Cloud DB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AutoRent Pro | Premium UI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -11,325 +11,379 @@
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database-compat.js"></script>
 
-    <!-- Konfigurasi Warna Custom Tailwind -->
+    <!-- Konfigurasi Tema Tailwind -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brandDark: '#111216',
-                        brandCard: '#1d1f24',
-                        brandNeon: '#bbf700',
+                        appBg: '#F2F7F2', /* Latar belakang hijau sangat pucat */
+                        brandDark: '#17191A', /* Hitam pekat untuk kartu & nav mobile */
+                        brandLime: '#C4F340', /* Hijau neon untuk tombol & aksen */
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                    }
+                    fontFamily: { sans: ['Inter', 'sans-serif'], }
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        .modal-enter { animation: fadeIn 0.2s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        /* Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { -webkit-tap-highlight-color: transparent; }
+        .modal-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-brandDark font-sans text-white h-screen flex flex-col overflow-hidden selection:bg-brandNeon selection:text-black">
+<body class="bg-appBg font-sans text-gray-800 min-h-screen">
 
     <!-- ================= HALAMAN AUTENTIKASI ================= -->
-    <div id="auth-page" class="absolute inset-0 z-50 flex items-center justify-center bg-brandDark overflow-y-auto py-10 px-4">
-        <div class="bg-brandCard p-8 md:p-12 rounded-[2rem] shadow-2xl w-full max-w-md m-auto border border-gray-800">
-            <div class="text-center mb-10">
-                <i class="fas fa-asterisk text-4xl text-brandNeon mb-4 animate-spin-slow"></i>
-                <h2 class="text-3xl font-light text-white tracking-wide">AutoRent</h2>
-                <p class="text-gray-400 text-sm mt-2" id="auth-subtitle">Menghubungkan ke Cloud...</p>
-            </div>
-            <div id="auth-alert" class="hidden p-4 rounded-xl mb-6 text-sm text-center font-medium"></div>
-
-            <div id="form-login" class="space-y-5">
-                <input type="text" id="login-username" class="w-full px-5 py-4 bg-[#111216] border border-gray-800 rounded-2xl focus:ring-2 focus:ring-brandNeon text-white outline-none transition" placeholder="Username" disabled>
-                <input type="password" id="login-password" class="w-full px-5 py-4 bg-[#111216] border border-gray-800 rounded-2xl focus:ring-2 focus:ring-brandNeon text-white outline-none transition" placeholder="Password" disabled>
-                <button id="btn-login" onclick="prosesLogin()" class="w-full bg-brandNeon text-black font-bold text-lg py-4 px-4 rounded-2xl hover:bg-[#a6db00] transition shadow-lg opacity-50 cursor-not-allowed mt-2" disabled>Masuk Sistem</button>
-                <div class="text-center mt-6 text-sm text-gray-400">
-                    Karyawan baru? <button onclick="toggleAuth('register')" class="text-brandNeon font-bold hover:underline">Registrasi Akun</button>
+    <div id="auth-page" class="fixed inset-0 z-[100] flex items-center justify-center bg-appBg overflow-y-auto p-4">
+        <div class="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] w-full max-w-md border border-gray-100">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-brandLime rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brandLime/30 transform rotate-3">
+                    <i class="fas fa-car-side text-2xl text-brandDark -rotate-3"></i>
                 </div>
+                <h2 class="text-2xl font-bold text-brandDark">AutoRent</h2>
+                <p class="text-gray-500 text-sm mt-1" id="auth-subtitle">Menghubungkan sistem...</p>
+            </div>
+            
+            <div id="auth-alert" class="hidden p-4 rounded-2xl mb-6 text-sm text-center font-bold"></div>
+
+            <!-- Login Form -->
+            <div id="form-login" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-2">Username</label>
+                    <input type="text" id="login-username" class="w-full mt-1 px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Masukkan username" disabled>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-2">Password</label>
+                    <input type="password" id="login-password" class="w-full mt-1 px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="••••••••" disabled>
+                </div>
+                <button id="btn-login" onclick="prosesLogin()" class="w-full bg-brandDark text-white font-bold text-lg py-4 rounded-2xl hover:bg-black transition mt-2 shadow-xl shadow-brandDark/20 opacity-50 cursor-not-allowed" disabled>Masuk</button>
+                <p class="text-center mt-6 text-sm text-gray-500">Karyawan baru? <button onclick="toggleAuth('register')" class="text-brandDark font-bold hover:text-brandLime transition">Daftar Akun</button></p>
             </div>
 
+            <!-- Register Form -->
             <div id="form-register" class="space-y-4 hidden">
-                <input type="text" id="reg-name" class="w-full px-5 py-3 bg-[#111216] border border-gray-800 rounded-2xl text-white outline-none focus:ring-2 focus:ring-brandNeon" placeholder="Nama Lengkap">
-                <input type="text" id="reg-username" class="w-full px-5 py-3 bg-[#111216] border border-gray-800 rounded-2xl text-white outline-none focus:ring-2 focus:ring-brandNeon" placeholder="Username Baru">
-                <input type="password" id="reg-password" class="w-full px-5 py-3 bg-[#111216] border border-gray-800 rounded-2xl text-white outline-none focus:ring-2 focus:ring-brandNeon" placeholder="Password">
-                <select id="reg-role" class="w-full px-5 py-3 bg-[#111216] border border-gray-800 rounded-2xl text-white outline-none focus:ring-2 focus:ring-brandNeon appearance-none">
+                <input type="text" id="reg-name" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Nama Lengkap">
+                <input type="text" id="reg-username" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Username Baru">
+                <input type="password" id="reg-password" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Password">
+                <select id="reg-role" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium appearance-none">
                     <option value="admin">Admin Operasional</option>
                     <option value="pemilik">Pemilik (Full Access)</option>
                 </select>
-                <button onclick="prosesRegister()" class="w-full bg-white text-black font-bold py-4 px-4 rounded-2xl hover:bg-gray-200 transition mt-2">Daftar Sekarang</button>
-                <div class="text-center mt-4 text-sm text-gray-400">
-                    Sudah punya akses? <button onclick="toggleAuth('login')" class="text-brandNeon font-bold hover:underline">Login disini</button>
-                </div>
+                <button onclick="prosesRegister()" class="w-full bg-brandLime text-brandDark font-bold py-4 rounded-2xl hover:bg-[#b0de36] transition shadow-lg mt-2">Daftar Sekarang</button>
+                <p class="text-center mt-4 text-sm text-gray-500">Sudah ada akun? <button onclick="toggleAuth('login')" class="text-brandDark font-bold">Login</button></p>
             </div>
         </div>
     </div>
 
     <!-- ================= HALAMAN UTAMA APLIKASI ================= -->
-    <div id="main-app" class="hidden flex-col h-screen w-full">
+    <div id="main-app" class="hidden flex-col md:flex-row min-h-screen pb-24 md:pb-0">
         
-        <!-- TOP NAVIGATION BAR (Fixed) -->
-        <nav class="flex justify-between items-center px-4 md:px-10 py-4 md:py-5 flex-shrink-0 relative z-40 bg-brandDark">
-            <div class="text-lg md:text-xl font-medium tracking-wide flex items-center gap-2">
-                <i class="fas fa-asterisk text-brandNeon"></i> AutoRent
-            </div>
-            
-            <!-- Center Menu Desktop -->
-            <div class="hidden md:flex bg-brandCard rounded-full p-1 border border-gray-800 items-center justify-center">
-                <button onclick="changeMenu('dashboard')" id="nav-dashboard" class="nav-btn bg-brandNeon text-black font-bold px-6 py-2 rounded-full text-sm transition shadow-sm">Dashboard</button>
-                <button onclick="changeMenu('mobil')" id="nav-mobil" class="nav-btn text-gray-400 hover:text-white px-6 py-2 rounded-full font-medium text-sm transition">Armada</button>
-                <button onclick="changeMenu('transaksi')" id="nav-transaksi" class="nav-btn text-gray-400 hover:text-white px-6 py-2 rounded-full font-medium text-sm transition">Transaksi</button>
-                <button onclick="changeMenu('pegawai')" id="nav-pegawai" class="nav-btn text-gray-400 hover:text-white px-6 py-2 rounded-full font-medium text-sm transition hidden">Pegawai</button>
+        <!-- DESKTOP SIDEBAR -->
+        <aside class="hidden md:flex flex-col w-72 bg-white fixed h-full z-10 px-8 py-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+            <div class="flex items-center gap-3 mb-12">
+                <div class="w-10 h-10 bg-brandLime rounded-xl flex items-center justify-center shadow-sm">
+                    <i class="fas fa-car text-brandDark"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-brandDark tracking-tight">AutoRent</h2>
             </div>
 
-            <!-- Profile & Mobile Menu Toggle -->
-            <div class="flex items-center gap-3 md:gap-4">
-                <div class="hidden md:block text-right">
-                    <div class="text-sm font-bold truncate w-32" id="user-name">Nama</div>
-                    <div class="text-xs text-brandNeon capitalize" id="user-role">Role</div>
-                </div>
-                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brandCard border border-gray-700 flex items-center justify-center font-bold text-brandNeon text-sm md:text-base" id="user-initial">A</div>
-                <button onclick="prosesLogout()" class="hidden md:flex w-10 h-10 rounded-full bg-brandCard border border-gray-700 items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fas fa-sign-out-alt"></i></button>
-                <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden text-white ml-1 p-2"><i class="fas fa-bars text-xl"></i></button>
+            <div class="mb-10">
+                <p class="text-gray-400 text-sm font-medium">Welcome Back,</p>
+                <h3 class="text-2xl font-bold text-brandDark mt-1 truncate" id="desk-user-name">Nama User!</h3>
+                <div class="mt-2 inline-block px-3 py-1 bg-brandLime/20 text-brandDark text-xs font-bold rounded-lg capitalize" id="desk-user-role">Role</div>
             </div>
+
+            <nav class="flex flex-col gap-2 flex-1">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider mt-4">Menu Utama</p>
+                <button onclick="changeMenu('dashboard')" id="nav-desk-dashboard" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl bg-brandDark text-white font-bold transition">
+                    <i class="fas fa-border-all w-5"></i> Dashboard
+                </button>
+                <button onclick="changeMenu('mobil')" id="nav-desk-mobil" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 font-semibold transition">
+                    <i class="fas fa-car-side w-5"></i> Armada
+                </button>
+                <button onclick="changeMenu('transaksi')" id="nav-desk-transaksi" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 font-semibold transition">
+                    <i class="fas fa-receipt w-5"></i> Transaksi
+                </button>
+                <button onclick="changeMenu('pegawai')" id="nav-desk-pegawai" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 font-semibold transition hidden">
+                    <i class="fas fa-users w-5"></i> Pegawai
+                </button>
+            </nav>
+
+            <button onclick="prosesLogout()" class="mt-auto flex items-center gap-4 px-5 py-3.5 rounded-2xl text-red-500 hover:bg-red-50 font-bold transition">
+                <i class="fas fa-sign-out-alt w-5"></i> Keluar Sistem
+            </button>
+        </aside>
+
+        <!-- MOBILE FLOATING BOTTOM NAV (Sangat User Friendly untuk HP) -->
+        <nav class="md:hidden fixed bottom-5 left-1/2 transform -translate-x-1/2 w-[92%] bg-brandDark rounded-[2rem] p-2 flex justify-between items-center shadow-[0_20px_40px_rgba(0,0,0,0.3)] z-40">
+            <button onclick="changeMenu('dashboard')" id="nav-mob-dashboard" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-brandLime transition">
+                <i class="fas fa-border-all text-xl mb-1"></i><span class="text-[9px] font-bold">Home</span>
+            </button>
+            <button onclick="changeMenu('mobil')" id="nav-mob-mobil" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-gray-500 hover:text-gray-300 transition">
+                <i class="fas fa-car-side text-xl mb-1"></i><span class="text-[9px] font-bold">Armada</span>
+            </button>
+            <button onclick="changeMenu('transaksi')" id="nav-mob-transaksi" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-gray-500 hover:text-gray-300 transition">
+                <i class="fas fa-receipt text-xl mb-1"></i><span class="text-[9px] font-bold">Transaksi</span>
+            </button>
+            <button onclick="changeMenu('pegawai')" id="nav-mob-pegawai" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-gray-500 hover:text-gray-300 transition hidden">
+                <i class="fas fa-users text-xl mb-1"></i><span class="text-[9px] font-bold">Pegawai</span>
+            </button>
+            <button onclick="prosesLogout()" class="relative flex flex-col items-center justify-center py-2 px-4 text-gray-500 hover:text-red-400 transition border-l border-gray-700 ml-1">
+                <i class="fas fa-power-off text-xl"></i>
+            </button>
         </nav>
 
-        <!-- Mobile Dropdown Menu -->
-        <div id="mobile-menu" class="hidden absolute top-16 right-4 left-4 bg-brandCard border border-gray-700 rounded-2xl shadow-2xl z-50 p-4 flex flex-col gap-2 md:hidden">
-            <button onclick="changeMenu('dashboard')" class="text-left px-4 py-3 rounded-xl bg-brandNeon text-black font-bold">Dashboard</button>
-            <button onclick="changeMenu('mobil')" class="text-left px-4 py-3 rounded-xl text-gray-300 hover:bg-gray-800">Armada</button>
-            <button onclick="changeMenu('transaksi')" class="text-left px-4 py-3 rounded-xl text-gray-300 hover:bg-gray-800">Transaksi</button>
-            <button onclick="changeMenu('pegawai')" id="nav-pegawai-mobile" class="text-left px-4 py-3 rounded-xl text-gray-300 hover:bg-gray-800 hidden">Pegawai</button>
-            <hr class="border-gray-700 my-2">
-            <button onclick="prosesLogout()" class="text-left px-4 py-3 rounded-xl text-red-400 hover:bg-gray-800 font-bold"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
-        </div>
-
-        <!-- ================= WRAPPER SCROLLABLE UTAMA ================= -->
-        <!-- Perubahan utama: Semua konten dibungkus dalam div ini agar bisa di-scroll bersamaan di HP -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col w-full relative">
+        <!-- AREA KONTEN UTAMA -->
+        <main class="flex-1 md:ml-72 p-5 md:p-10 w-full max-w-[1400px] mx-auto">
             
-            <!-- HEADER TITLE & DARK METRICS -->
-            <div class="px-4 md:px-10 pb-6 flex-shrink-0">
-                <div class="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 mt-2 md:mt-0">
-                    <button class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-brandCard flex items-center justify-center hover:bg-gray-700 transition"><i class="fas fa-arrow-left text-xs md:text-sm text-gray-400"></i></button>
-                    <h1 class="text-2xl md:text-4xl font-light tracking-wide" id="page-title">Dashboard</h1>
+            <!-- Mobile Header Profile -->
+            <header class="md:hidden flex justify-between items-center mb-6 bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brandDark text-brandLime flex items-center justify-center font-bold" id="mob-user-initial">A</div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium">Hello,</p>
+                        <h3 class="text-sm font-bold text-gray-800" id="mob-user-name">Nama</h3>
+                    </div>
+                </div>
+                <div class="bg-brandLime/20 text-brandDark px-3 py-1.5 rounded-xl text-[10px] font-bold capitalize" id="mob-user-role">Role</div>
+            </header>
+
+            <!-- Bagian Atas Halaman -->
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl md:text-3xl font-bold text-brandDark" id="page-title">Financial Overview</h1>
+                <div class="hidden md:flex gap-2">
+                    <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-500 hover:text-brandDark shadow-sm"><i class="fas fa-bell"></i></button>
+                </div>
+            </div>
+
+            <!-- ================= DASHBOARD CONTENT ================= -->
+            <div id="sec-dashboard" class="content-section block space-y-6 md:space-y-8">
+                
+                <!-- Metrics Grid 2x2 di HP, 4x1 di Desktop -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <!-- Card 1 -->
+                    <div onclick="showDetail('total')" class="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between h-32 md:h-40">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2"><i class="fas fa-layer-group"></i></div>
+                        <div>
+                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Total Armada</p>
+                            <h3 class="text-2xl md:text-3xl font-black text-brandDark mt-1" id="stat-total-mobil">0</h3>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div onclick="showDetail('ready')" class="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between h-32 md:h-40">
+                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center mb-2"><i class="fas fa-check"></i></div>
+                        <div>
+                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Di Garasi</p>
+                            <h3 class="text-2xl md:text-3xl font-black text-brandDark mt-1" id="stat-mobil-ready">0</h3>
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div onclick="showDetail('rented')" class="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between h-32 md:h-40">
+                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mb-2"><i class="fas fa-key"></i></div>
+                        <div>
+                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Disewa (Aktif)</p>
+                            <h3 class="text-2xl md:text-3xl font-black text-brandDark mt-1" id="stat-mobil-rented">0</h3>
+                        </div>
+                    </div>
+                    <!-- Card 4 (Dark / Premium Card) -->
+                    <div onclick="showDetail('omset')" class="bg-brandDark rounded-[2rem] p-5 md:p-6 shadow-[0_10px_30px_rgba(23,25,26,0.15)] transition cursor-pointer flex flex-col justify-between h-32 md:h-40 relative overflow-hidden group">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-brandLime/20 transition duration-500"></div>
+                        <div class="flex justify-between items-start z-10">
+                            <div class="w-10 h-10 rounded-full bg-white/10 text-brandLime flex items-center justify-center"><i class="fas fa-wallet"></i></div>
+                            <span class="bg-brandLime text-brandDark text-[9px] md:text-[10px] font-bold px-2 py-1 rounded-md">Bulan Ini</span>
+                        </div>
+                        <div class="z-10 mt-2">
+                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Omset Pendapatan</p>
+                            <h3 class="text-xl md:text-3xl font-black text-white mt-1 truncate" id="stat-pendapatan">Rp 0</h3>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- DASHBOARD METRICS (Grid 2 kolom untuk HP, 4 untuk Desktop) -->
-                <div id="dashboard-metrics" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 block">
-                    <div onclick="showDetail('total')" class="bg-brandCard rounded-2xl md:rounded-[2rem] p-4 md:p-6 border border-gray-800 hover:border-brandNeon transition cursor-pointer flex flex-col justify-between h-28 md:h-36 relative overflow-hidden">
-                        <span class="text-gray-400 text-[10px] md:text-sm font-medium z-10">Total Armada</span>
-                        <span class="text-2xl md:text-4xl font-light text-white z-10" id="stat-total-mobil">0</span>
-                        <i class="fas fa-car absolute -bottom-2 md:-bottom-4 -right-2 text-5xl md:text-6xl text-gray-800 opacity-30"></i>
-                    </div>
-                    <div onclick="showDetail('ready')" class="bg-brandCard rounded-2xl md:rounded-[2rem] p-4 md:p-6 border border-gray-800 hover:border-brandNeon transition cursor-pointer flex flex-col justify-between h-28 md:h-36 relative overflow-hidden">
-                        <span class="text-gray-400 text-[10px] md:text-sm font-medium z-10">Tersedia</span>
-                        <span class="text-2xl md:text-4xl font-light text-white z-10" id="stat-mobil-ready">0</span>
-                        <i class="fas fa-check-circle absolute -bottom-2 md:-bottom-4 -right-2 text-5xl md:text-6xl text-gray-800 opacity-30"></i>
-                    </div>
-                    <div onclick="showDetail('rented')" class="bg-brandCard rounded-2xl md:rounded-[2rem] p-4 md:p-6 border border-gray-800 hover:border-brandNeon transition cursor-pointer flex flex-col justify-between h-28 md:h-36 relative overflow-hidden">
-                        <span class="text-gray-400 text-[10px] md:text-sm font-medium z-10">Sedang Disewa</span>
-                        <span class="text-2xl md:text-4xl font-light text-white z-10" id="stat-mobil-rented">0</span>
-                        <i class="fas fa-key absolute -bottom-2 md:-bottom-4 -right-2 text-5xl md:text-6xl text-gray-800 opacity-30"></i>
-                    </div>
-                    <div onclick="showDetail('omset')" class="bg-brandNeon rounded-2xl md:rounded-[2rem] p-4 md:p-6 border border-[#a6db00] shadow-[0_0_20px_rgba(187,247,0,0.1)] transition cursor-pointer flex flex-col justify-between h-28 md:h-36 text-black relative overflow-hidden">
-                        <div class="flex justify-between items-center z-10">
-                            <span class="text-black font-semibold text-[10px] md:text-sm leading-tight">Pendapatan</span>
-                            <i class="fas fa-arrow-up text-[10px] md:text-xs"></i>
+                <!-- Bagian Bawah Dashboard -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Transaksi Terakhir -->
+                    <div class="lg:col-span-2 bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-brandDark">Aktivitas Sewa Terkini</h3>
+                            <button onclick="changeMenu('transaksi')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-brandLime hover:text-brandDark transition"><i class="fas fa-arrow-right"></i></button>
                         </div>
-                        <span class="text-lg md:text-3xl font-bold tracking-tight z-10 truncate mt-1" id="stat-pendapatan">Rp 0</span>
-                        <i class="fas fa-wallet absolute -bottom-2 md:-bottom-4 -right-2 text-5xl md:text-6xl text-black opacity-10"></i>
+                        <div class="overflow-x-auto hide-scrollbar">
+                            <table class="w-full text-left border-collapse min-w-[500px]">
+                                <tbody id="dash-recent-trx" class="divide-y divide-gray-50 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Status Armada -->
+                    <div class="bg-brandDark rounded-[2rem] p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col text-white">
+                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-brandLime/10 rounded-full blur-3xl"></div>
+                        
+                        <div class="flex justify-between items-center mb-6 z-10">
+                            <h3 class="text-lg font-bold">Utilitas Armada</h3>
+                            <i class="fas fa-chart-pie text-brandLime opacity-80"></i>
+                        </div>
+                        
+                        <div class="z-10 mb-8">
+                            <div class="flex justify-between text-xs font-bold mb-2">
+                                <span class="text-gray-400">Total Digunakan</span>
+                                <span class="text-brandLime" id="dash-progress-pct">0%</span>
+                            </div>
+                            <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden flex">
+                                <div id="dash-progress-bar" class="bg-brandLime h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 z-10">Unit On-Duty</h4>
+                        <ul id="dash-rented-list" class="space-y-3 z-10 flex-1 overflow-y-auto hide-scrollbar max-h-40 text-sm"></ul>
                     </div>
                 </div>
             </div>
 
-            <!-- BOTTOM WHITE CONTENT AREA -->
-            <main class="bg-white rounded-t-[2rem] md:rounded-t-[2.5rem] p-5 md:p-10 flex-1 min-h-[50vh] text-gray-900 w-full shadow-inner relative flex flex-col">
-                
-                <!-- Dashboard Info Content -->
-                <div id="sec-dashboard" class="content-section block flex-1">
-                    <h3 class="text-lg md:text-xl font-bold mb-5 md:mb-6 text-gray-800">Ikhtisar Operasional</h3>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
-                        <!-- Kolom Kiri: Transaksi Terakhir -->
-                        <div class="lg:col-span-2 bg-gray-50 border border-gray-100 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-sm">
-                            <div class="flex justify-between items-center mb-4 md:mb-5">
-                                <h4 class="font-bold text-gray-800 text-sm md:text-base">Sewa Terbaru</h4>
-                                <button onclick="changeMenu('transaksi')" class="text-[10px] md:text-xs bg-brandDark text-brandNeon font-bold px-3 py-2 rounded-full hover:bg-gray-800 transition shadow">Lihat Semua</button>
-                            </div>
-                            <div class="overflow-x-auto custom-scrollbar">
-                                <table class="w-full text-left text-xs md:text-sm border-collapse min-w-[400px]">
-                                    <thead class="text-gray-400 text-[10px] md:text-xs uppercase border-b border-gray-200">
-                                        <tr><th class="pb-3 font-medium">Pelanggan</th><th class="pb-3 font-medium">Unit Mobil</th><th class="pb-3 font-medium text-right">Nilai</th><th class="pb-3 font-medium text-right">Status</th></tr>
-                                    </thead>
-                                    <tbody id="dash-recent-trx" class="divide-y divide-gray-100">
-                                        <!-- Diisi oleh JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
+            <!-- ================= MOBIL (ARMADA) ================= -->
+            <div id="sec-mobil" class="content-section hidden">
+                <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Cari mobil..." class="w-full bg-gray-50 rounded-2xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brandLime transition">
                         </div>
-
-                        <!-- Kolom Kanan: Utilitas & Unit Keluar -->
-                        <div class="bg-gray-50 border border-gray-100 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-sm flex flex-col">
-                            <h4 class="font-bold text-gray-800 mb-4 text-sm md:text-base">Utilitas Armada</h4>
-                            
-                            <!-- Progress Bar Visual -->
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 md:h-3 mb-2 flex overflow-hidden shadow-inner" id="dash-progress-bar">
-                                <!-- Diisi oleh JS -->
-                            </div>
-                            <div class="flex justify-between text-[10px] md:text-xs font-bold text-gray-500 mb-6 md:mb-8" id="dash-progress-text">
-                                <!-- Diisi oleh JS -->
-                            </div>
-
-                            <h4 class="font-bold text-gray-800 mb-3 text-xs md:text-sm border-b border-gray-200 pb-2">Sedang Disewa (On Duty)</h4>
-                            <ul id="dash-rented-list" class="space-y-3 flex-1 overflow-y-auto max-h-40 md:max-h-48 custom-scrollbar pr-2 text-xs md:text-sm text-gray-600">
-                                <!-- Diisi oleh JS -->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MOBIL -->
-                <div id="sec-mobil" class="content-section hidden flex-1">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 md:mb-6 gap-3">
-                        <h3 class="text-lg md:text-xl font-bold">Katalog Kendaraan</h3>
-                        <button onclick="openModalMobil()" class="bg-brandDark text-white px-5 py-2.5 rounded-full text-xs md:text-sm font-medium hover:bg-gray-800 transition flex items-center shadow-md w-full md:w-auto justify-center">
-                            <i class="fas fa-plus mr-2 text-brandNeon"></i> Register Mobil
+                        <button onclick="openModalMobil()" class="w-full sm:w-auto bg-brandDark text-brandLime font-bold px-6 py-3 rounded-2xl hover:bg-black transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-plus"></i> Unit Baru
                         </button>
                     </div>
-                    <div class="overflow-x-auto custom-scrollbar border border-gray-100 rounded-xl">
-                        <table class="w-full text-left border-collapse min-w-[500px]">
-                            <thead class="text-gray-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-gray-100 bg-gray-50">
-                                <tr><th class="p-3 md:p-4 font-medium">Plat Nomor</th><th class="p-3 md:p-4 font-medium">Merek / Tipe</th><th class="p-3 md:p-4 font-medium">Tarif / Hari</th><th class="p-3 md:p-4 font-medium">Status</th><th class="p-3 md:p-4 font-medium text-right">Manajemen</th></tr>
-                            </thead>
-                            <tbody id="tabel-mobil" class="text-xs md:text-sm divide-y divide-gray-50"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- TRANSAKSI -->
-                <div id="sec-transaksi" class="content-section hidden flex-1">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 md:mb-6 gap-3">
-                        <h3 class="text-lg md:text-xl font-bold">Riwayat Kontrak</h3>
-                        <button onclick="openModalTrx()" class="bg-brandNeon text-black font-bold px-5 py-2.5 rounded-full text-xs md:text-sm hover:bg-[#a6db00] transition flex items-center shadow-md w-full md:w-auto justify-center">
-                            <i class="fas fa-file-signature mr-2"></i> Buat Kontrak
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar border border-gray-100 rounded-xl">
+                    <div class="overflow-x-auto hide-scrollbar">
                         <table class="w-full text-left border-collapse min-w-[600px]">
-                            <thead class="text-gray-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-gray-100 bg-gray-50">
-                                <tr><th class="p-3 md:p-4 font-medium">ID / Tanggal</th><th class="p-3 md:p-4 font-medium">Pelanggan</th><th class="p-3 md:p-4 font-medium">Unit</th><th class="p-3 md:p-4 font-medium">Nilai Sewa</th><th class="p-3 md:p-4 font-medium">Status</th><th class="p-3 md:p-4 font-medium text-right">Aksi</th></tr>
+                            <thead class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100">
+                                <tr><th class="py-4 px-2">Kendaraan</th><th class="py-4 px-2">Tarif Harian</th><th class="py-4 px-2">Status</th><th class="py-4 px-2 text-right">Aksi</th></tr>
                             </thead>
-                            <tbody id="tabel-transaksi" class="text-xs md:text-sm divide-y divide-gray-50"></tbody>
+                            <tbody id="tabel-mobil" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
                         </table>
                     </div>
                 </div>
+            </div>
 
-                <!-- PEGAWAI -->
-                <div id="sec-pegawai" class="content-section hidden flex-1">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 md:mb-6 gap-3">
-                        <h3 class="text-lg md:text-xl font-bold">Akses Karyawan</h3>
-                        <button onclick="openModalPegawai()" class="bg-brandDark text-white px-5 py-2.5 rounded-full text-xs md:text-sm font-medium hover:bg-gray-800 transition flex items-center shadow-md w-full md:w-auto justify-center">
-                            <i class="fas fa-user-plus mr-2 text-brandNeon"></i> Tambah Akun
+            <!-- ================= TRANSAKSI ================= -->
+            <div id="sec-transaksi" class="content-section hidden">
+                <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h3 class="text-lg font-bold text-brandDark hidden sm:block">Daftar Kontrak</h3>
+                        <button onclick="openModalTrx()" class="w-full sm:w-auto bg-brandLime text-brandDark font-bold px-6 py-3 rounded-2xl hover:bg-[#b0de36] transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-file-signature"></i> Buat Sewa Baru
                         </button>
                     </div>
-                    <div class="overflow-x-auto custom-scrollbar border border-gray-100 rounded-xl">
-                        <table class="w-full text-left border-collapse min-w-[400px]">
-                            <thead class="text-gray-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-gray-100 bg-gray-50">
-                                <tr><th class="p-3 md:p-4 font-medium">Username</th><th class="p-3 md:p-4 font-medium">Nama Lengkap</th><th class="p-3 md:p-4 font-medium">Role Level</th><th class="p-3 md:p-4 font-medium text-right">Aksi</th></tr>
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
+                            <thead class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100">
+                                <tr><th class="py-4 px-2">Transaksi</th><th class="py-4 px-2">Pelanggan</th><th class="py-4 px-2">Unit</th><th class="py-4 px-2">Total Harga</th><th class="py-4 px-2">Status</th><th class="py-4 px-2 text-right">Aksi</th></tr>
                             </thead>
-                            <tbody id="tabel-pegawai" class="text-xs md:text-sm divide-y divide-gray-50"></tbody>
+                            <tbody id="tabel-transaksi" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
                         </table>
                     </div>
                 </div>
-            </main>
-        </div> <!-- End of Wrapper Scrollable -->
+            </div>
+
+            <!-- ================= PEGAWAI ================= -->
+            <div id="sec-pegawai" class="content-section hidden">
+                <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h3 class="text-lg font-bold text-brandDark hidden sm:block">Manajemen Akses</h3>
+                        <button onclick="openModalPegawai()" class="w-full sm:w-auto bg-brandDark text-white font-bold px-6 py-3 rounded-2xl hover:bg-black transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-user-plus text-brandLime"></i> Tambah Akun
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100">
+                                <tr><th class="py-4 px-2">User Info</th><th class="py-4 px-2">Role Akses</th><th class="py-4 px-2 text-right">Manajemen</th></tr>
+                            </thead>
+                            <tbody id="tabel-pegawai" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- ================= KUMPULAN MODAL (POP-UP) ================= -->
-    <style> .custom-modal-box { @apply bg-white rounded-2xl md:rounded-[2rem] shadow-2xl w-[90%] md:w-full max-w-md modal-enter p-6 md:p-8; } </style>
+    <!-- ================= MODALS ================= -->
+    <style> .modal-box { @apply bg-white rounded-[2.5rem] shadow-2xl w-[92%] md:w-full max-w-md modal-enter p-6 md:p-8 border border-gray-100; } </style>
 
-    <!-- Modal Detail Dashboard -->
-    <div id="detail-modal" class="hidden absolute inset-0 z-[60] flex items-center justify-center bg-brandDark bg-opacity-80 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl md:rounded-[2rem] shadow-2xl w-full max-w-3xl flex flex-col max-h-[80vh] modal-enter overflow-hidden">
-            <div class="p-5 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl md:text-2xl font-bold text-brandDark" id="modal-title">Rincian Data</h3>
-                <button onclick="closeModal('detail-modal')" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition shadow-sm"><i class="fas fa-times"></i></button>
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="hidden fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] modal-enter mb-16 md:mb-0">
+            <div class="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-brandDark" id="modal-title">Rincian</h3>
+                <button onclick="closeModal('detail-modal')" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"><i class="fas fa-times"></i></button>
             </div>
-            <div class="p-4 md:p-8 overflow-y-auto custom-scrollbar flex-1">
-                <div class="overflow-x-auto border border-gray-100 rounded-xl">
+            <div class="p-6 md:p-8 overflow-y-auto hide-scrollbar flex-1">
+                <div class="overflow-x-auto hide-scrollbar">
                     <table class="w-full text-left border-collapse min-w-[400px]">
-                        <thead id="modal-thead" class="text-gray-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-gray-100 bg-gray-50"></thead>
-                        <tbody id="modal-tbody" class="text-xs md:text-sm divide-y divide-gray-50 text-gray-800"></tbody>
+                        <thead id="modal-thead" class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100"></thead>
+                        <tbody id="modal-tbody" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Form Template -->
-    <div id="modal-add-mobil" class="hidden absolute inset-0 z-[60] flex items-center justify-center bg-brandDark bg-opacity-80 backdrop-blur-sm p-4">
-        <div class="custom-modal-box">
-            <h3 class="text-xl md:text-2xl font-bold text-brandDark mb-5 md:mb-6">Register Armada</h3>
-            <div class="space-y-4 md:space-y-5">
-                <div><label class="block text-[10px] md:text-xs font-bold text-gray-400 uppercase mb-1.5 md:mb-2">Plat Nomor</label><input type="text" id="input-plat" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl uppercase focus:ring-2 focus:ring-brandDark outline-none text-sm"></div>
-                <div><label class="block text-[10px] md:text-xs font-bold text-gray-400 uppercase mb-1.5 md:mb-2">Merek / Tipe</label><input type="text" id="input-merk" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brandDark outline-none text-sm"></div>
-                <div><label class="block text-[10px] md:text-xs font-bold text-gray-400 uppercase mb-1.5 md:mb-2">Tarif Harian (Rp)</label><input type="number" id="input-harga" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brandDark outline-none text-sm"></div>
+    <!-- Add Mobil -->
+    <div id="modal-add-mobil" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
+        <div class="modal-box">
+            <h3 class="text-2xl font-bold text-brandDark mb-6">Unit Baru</h3>
+            <div class="space-y-4">
+                <input type="text" id="input-plat" class="w-full px-5 py-4 bg-gray-50 rounded-2xl uppercase focus:ring-2 focus:ring-brandLime outline-none font-bold text-brandDark" placeholder="PLAT NOMOR (Cth: B1234CD)">
+                <input type="text" id="input-merk" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Merek & Tipe">
+                <input type="number" id="input-harga" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Tarif Per Hari (Rp)">
             </div>
-            <div class="mt-6 md:mt-8 flex gap-3">
-                <button onclick="closeModal('modal-add-mobil')" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl md:rounded-2xl hover:bg-gray-200 transition text-sm">Batal</button>
-                <button onclick="simpanMobil()" class="flex-1 bg-brandDark text-white font-bold py-3 rounded-xl md:rounded-2xl hover:bg-gray-800 transition shadow text-sm">Simpan</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-add-trx" class="hidden absolute inset-0 z-[60] flex items-center justify-center bg-brandDark bg-opacity-80 backdrop-blur-sm p-4">
-        <div class="custom-modal-box">
-            <h3 class="text-xl md:text-2xl font-bold text-brandDark mb-5 md:mb-6">Buat Kontrak</h3>
-            <div class="space-y-4 md:space-y-5">
-                <div><label class="block text-[10px] md:text-xs font-bold text-gray-400 uppercase mb-1.5 md:mb-2">Pelanggan</label><input type="text" id="input-pelanggan" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brandNeon outline-none text-sm"></div>
-                <div>
-                    <label class="block text-[10px] md:text-xs font-bold text-gray-400 uppercase mb-1.5 md:mb-2">Pilih Unit Tersedia</label>
-                    <select id="input-pilih-mobil" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brandNeon outline-none appearance-none text-sm"></select>
-                </div>
-                <div><label class="block text-[10px] md:text-xs font-bold text-gray-400 uppercase mb-1.5 md:mb-2">Durasi (Hari)</label><input type="number" id="input-hari" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brandNeon outline-none text-sm"></div>
-            </div>
-            <div class="mt-6 md:mt-8 flex gap-3">
-                <button onclick="closeModal('modal-add-trx')" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl md:rounded-2xl hover:bg-gray-200 transition text-sm">Batal</button>
-                <button onclick="simpanTransaksi()" class="flex-1 bg-brandNeon text-black font-bold py-3 rounded-xl md:rounded-2xl hover:bg-[#a6db00] transition shadow text-sm">Proses</button>
+            <div class="mt-8 flex gap-3">
+                <button onclick="closeModal('modal-add-mobil')" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl transition">Batal</button>
+                <button onclick="simpanMobil()" class="flex-1 bg-brandDark text-brandLime font-bold py-4 rounded-2xl shadow-xl hover:bg-black transition">Simpan</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-add-pegawai" class="hidden absolute inset-0 z-[60] flex items-center justify-center bg-brandDark bg-opacity-80 backdrop-blur-sm p-4">
-        <div class="custom-modal-box">
-            <h3 class="text-xl md:text-2xl font-bold text-brandDark mb-5 md:mb-6">Tambah Akses</h3>
-            <div class="space-y-4 md:space-y-5">
-                <input type="text" id="input-peg-nama" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl outline-none focus:ring-2 focus:ring-brandDark text-sm" placeholder="Nama Karyawan">
-                <input type="text" id="input-peg-user" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl outline-none focus:ring-2 focus:ring-brandDark text-sm" placeholder="Username Log-in">
-                <input type="password" id="input-peg-pass" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl outline-none focus:ring-2 focus:ring-brandDark text-sm" placeholder="Password Sistem">
-                <select id="input-peg-role" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl md:rounded-2xl outline-none appearance-none focus:ring-2 focus:ring-brandDark text-sm">
+    <!-- Add Transaksi -->
+    <div id="modal-add-trx" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
+        <div class="modal-box">
+            <h3 class="text-2xl font-bold text-brandDark mb-6">Buat Kontrak</h3>
+            <div class="space-y-4">
+                <input type="text" id="input-pelanggan" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Nama Pelanggan">
+                <select id="input-pilih-mobil" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none appearance-none font-medium"></select>
+                <input type="number" id="input-hari" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Lama Sewa (Hari)">
+            </div>
+            <div class="mt-8 flex gap-3">
+                <button onclick="closeModal('modal-add-trx')" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl transition">Batal</button>
+                <button onclick="simpanTransaksi()" class="flex-1 bg-brandLime text-brandDark font-bold py-4 rounded-2xl shadow-xl hover:bg-[#b0de36] transition">Proses Sewa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Pegawai -->
+    <div id="modal-add-pegawai" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
+        <div class="modal-box">
+            <h3 class="text-2xl font-bold text-brandDark mb-6">Akses Sistem</h3>
+            <div class="space-y-4">
+                <input type="text" id="input-peg-nama" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Nama Lengkap">
+                <input type="text" id="input-peg-user" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Username">
+                <input type="password" id="input-peg-pass" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Password">
+                <select id="input-peg-role" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none appearance-none focus:ring-2 focus:ring-brandLime font-medium">
                     <option value="admin">Admin Operasional</option>
                     <option value="pemilik">Pemilik (Full Access)</option>
                 </select>
             </div>
-            <div class="mt-6 md:mt-8 flex gap-3">
-                <button onclick="closeModal('modal-add-pegawai')" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl md:rounded-2xl transition text-sm">Batal</button>
-                <button onclick="simpanPegawai()" class="flex-1 bg-brandDark text-white font-bold py-3 rounded-xl md:rounded-2xl transition shadow text-sm">Simpan</button>
+            <div class="mt-8 flex gap-3">
+                <button onclick="closeModal('modal-add-pegawai')" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl transition">Batal</button>
+                <button onclick="simpanPegawai()" class="flex-1 bg-brandDark text-brandLime font-bold py-4 rounded-2xl shadow-xl transition">Simpan Akun</button>
             </div>
         </div>
     </div>
 
-    <!-- ================= JAVASCRIPT: LOGIKA FIREBASE ================= -->
+    <!-- ================= JAVASCRIPT: LOGIKA & FIREBASE ================= -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBDBfVdpDACXFMoxiuYSSUj8WAvHBAXs4w",
@@ -353,19 +407,17 @@
         });
 
         db.ref('mobil').on('value', (s) => {
-            const data = s.val() || {};
-            dbMobil = Object.keys(data).map(key => ({ ...data[key], fbKey: key }));
+            dbMobil = Object.keys(s.val() || {}).map(key => ({ ...s.val()[key], fbKey: key }));
             if(!document.getElementById('main-app').classList.contains('hidden')) renderDataUtama();
         });
 
         db.ref('transaksi').on('value', (s) => {
-            const data = s.val() || {};
-            dbTransaksi = Object.keys(data).map(key => ({ ...data[key], fbKey: key }));
+            dbTransaksi = Object.keys(s.val() || {}).map(key => ({ ...s.val()[key], fbKey: key }));
             if(!document.getElementById('main-app').classList.contains('hidden')) renderDataUtama();
         });
 
         function bukaKunciLogin() {
-            document.getElementById('auth-subtitle').innerText = "Koneksi Aman. Silakan masuk.";
+            document.getElementById('auth-subtitle').innerText = "Sistem Online. Silakan login.";
             document.getElementById('login-username').disabled = false;
             document.getElementById('login-password').disabled = false;
             let btn = document.getElementById('btn-login');
@@ -379,18 +431,18 @@
             if(mode === 'register') {
                 document.getElementById('form-login').classList.add('hidden');
                 document.getElementById('form-register').classList.remove('hidden');
-                document.getElementById('auth-subtitle').innerText = "Buat akses sistem baru";
+                document.getElementById('auth-subtitle').innerText = "Buat akses baru";
             } else {
                 document.getElementById('form-register').classList.add('hidden');
                 document.getElementById('form-login').classList.remove('hidden');
-                document.getElementById('auth-subtitle').innerText = "Koneksi Aman. Silakan masuk.";
+                document.getElementById('auth-subtitle').innerText = "Sistem Online. Silakan login.";
             }
         }
 
         function showAlert(msg, isError = true) {
             const box = document.getElementById('auth-alert');
             box.innerText = msg;
-            box.className = `p-3 md:p-4 rounded-xl mb-5 md:mb-6 text-sm text-center font-bold block ${isError ? 'bg-red-500 text-white' : 'bg-brandNeon text-black'}`;
+            box.className = `p-4 rounded-2xl mb-6 text-sm text-center font-bold block ${isError ? 'bg-red-50 text-red-500' : 'bg-brandLime/20 text-brandDark'}`;
         }
 
         function prosesRegister() {
@@ -408,12 +460,12 @@
                 let session = dbUsers[u]; session.username = u;
                 sessionStorage.setItem('loggedUser', JSON.stringify(session));
                 showApp(); renderDataUtama();
-            } else showAlert("Akses ditolak. Periksa kredensial.");
+            } else showAlert("Kredensial salah atau tidak valid.");
         }
 
         function prosesLogout() {
             sessionStorage.removeItem('loggedUser');
-            document.getElementById('main-app').classList.remove('flex');
+            document.getElementById('main-app').classList.remove('flex', 'md:flex-row');
             document.getElementById('main-app').classList.add('hidden');
             document.getElementById('auth-page').classList.remove('hidden');
             document.getElementById('login-password').value = '';
@@ -422,43 +474,49 @@
         function showApp() {
             document.getElementById('auth-page').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('main-app').classList.add('flex');
+            document.getElementById('main-app').classList.add('flex', 'md:flex-row');
             
             const session = JSON.parse(sessionStorage.getItem('loggedUser'));
-            document.getElementById('user-name').innerText = session.name;
-            document.getElementById('user-role').innerText = session.role;
-            document.getElementById('user-initial').innerText = session.name.charAt(0).toUpperCase();
+            
+            // Desktop Header Update
+            document.getElementById('desk-user-name').innerText = session.name;
+            document.getElementById('desk-user-role').innerText = session.role;
+            
+            // Mobile Header Update
+            document.getElementById('mob-user-name').innerText = session.name;
+            document.getElementById('mob-user-role').innerText = session.role;
+            document.getElementById('mob-user-initial').innerText = session.name.charAt(0).toUpperCase();
             
             let isPemilik = session.role === 'pemilik';
-            document.getElementById('nav-pegawai').style.display = isPemilik ? 'block' : 'none';
-            document.getElementById('nav-pegawai-mobile').style.display = isPemilik ? 'block' : 'none';
+            document.getElementById('nav-desk-pegawai').style.display = isPemilik ? 'flex' : 'none';
+            document.getElementById('nav-mob-pegawai').style.display = isPemilik ? 'flex' : 'none';
+            
             changeMenu('dashboard');
         }
 
         function changeMenu(menuName) {
+            // Sembunyikan konten
             document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('bg-brandNeon', 'text-black', 'font-bold', 'shadow-sm');
-                el.classList.add('text-gray-400');
-            });
-            
             document.getElementById('sec-' + menuName).classList.remove('hidden');
             
-            let activeBtn = document.getElementById('nav-' + menuName);
-            if(activeBtn) {
-                activeBtn.classList.remove('text-gray-400');
-                activeBtn.classList.add('bg-brandNeon', 'text-black', 'font-bold', 'shadow-sm');
-            }
+            // Reset Desktop Menu
+            document.querySelectorAll('.desk-nav-btn').forEach(el => {
+                el.classList.remove('bg-brandDark', 'text-white');
+                el.classList.add('text-gray-500');
+            });
+            let deskBtn = document.getElementById('nav-desk-' + menuName);
+            if(deskBtn) { deskBtn.classList.remove('text-gray-500'); deskBtn.classList.add('bg-brandDark', 'text-white'); }
 
-            const titles = { 'dashboard': 'Dashboard', 'mobil': 'Armada', 'transaksi': 'Transaksi', 'pegawai': 'Pegawai' };
+            // Reset Mobile Menu
+            document.querySelectorAll('.mob-nav-btn').forEach(el => {
+                el.classList.remove('text-brandLime');
+                el.classList.add('text-gray-500');
+            });
+            let mobBtn = document.getElementById('nav-mob-' + menuName);
+            if(mobBtn) { mobBtn.classList.remove('text-gray-500'); mobBtn.classList.add('text-brandLime'); }
+
+            const titles = { 'dashboard': 'Financial Overview', 'mobil': 'Katalog Armada', 'transaksi': 'Riwayat Kontrak', 'pegawai': 'Hak Akses' };
             document.getElementById('page-title').innerText = titles[menuName];
-            
-            if(menuName === 'dashboard') {
-                document.getElementById('dashboard-metrics').classList.remove('hidden');
-            } else {
-                document.getElementById('dashboard-metrics').classList.add('hidden');
-            }
-            document.getElementById('mobile-menu').classList.add('hidden');
         }
 
         function renderDataUtama() {
@@ -470,64 +528,73 @@
             document.getElementById('stat-total-mobil').innerText = dbMobil.length;
             document.getElementById('stat-mobil-ready').innerText = mobilReady;
             document.getElementById('stat-mobil-rented').innerText = dbMobil.length - mobilReady;
-            document.getElementById('stat-pendapatan').innerText = 'Rp ' + dbTransaksi.reduce((sum, trx) => sum + trx.total, 0).toLocaleString('id-ID');
+            
+            const totalOmset = dbTransaksi.reduce((sum, trx) => sum + trx.total, 0);
+            
+            // Format angka ringkas untuk Card Dark (Misal: Rp 12.5M / Rp 450K)
+            let textOmset = 'Rp ' + totalOmset.toLocaleString('id-ID');
+            if(totalOmset >= 1000000) textOmset = 'Rp ' + (totalOmset/1000000).toFixed(1) + 'M';
+            else if(totalOmset >= 1000) textOmset = 'Rp ' + (totalOmset/1000).toFixed(0) + 'K';
+            document.getElementById('stat-pendapatan').innerText = textOmset;
 
-            // Widget Dashboard
+            // Widget Dashboard (Utilitas)
             const totalMobil = dbMobil.length;
             const rentedCount = totalMobil - mobilReady;
             const persentaseSewa = totalMobil > 0 ? Math.round((rentedCount / totalMobil) * 100) : 0;
-            const persentaseTersedia = totalMobil > 0 ? 100 - persentaseSewa : 0;
             
-            document.getElementById('dash-progress-bar').innerHTML = `
-                <div style="width: ${persentaseTersedia}%" class="bg-green-400 h-full"></div>
-                <div style="width: ${persentaseSewa}%" class="bg-brandDark h-full"></div>
-            `;
-            document.getElementById('dash-progress-text').innerHTML = `
-                <span class="text-green-600">${persentaseTersedia}% Garasi</span>
-                <span class="text-gray-800">${persentaseSewa}% Disewa</span>
-            `;
+            document.getElementById('dash-progress-pct').innerText = persentaseSewa + '%';
+            document.getElementById('dash-progress-bar').style.width = persentaseSewa + '%';
 
             const rentedCars = dbMobil.filter(m => m.status === 'Disewa');
             let rentedListHTML = '';
             if (rentedCars.length > 0) {
                 rentedCars.forEach(m => {
                     rentedListHTML += `
-                        <li class="flex justify-between items-center bg-white p-2.5 md:p-3 rounded-xl border border-gray-100 shadow-sm">
-                            <div class="flex items-center gap-2.5 md:gap-3">
-                                <div class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"><i class="fas fa-car-side text-[10px] md:text-xs"></i></div>
-                                <div><p class="font-bold text-gray-800 text-[10px] md:text-xs">${m.plat}</p><p class="text-[9px] md:text-[10px] text-gray-400">${m.merk}</p></div>
-                            </div>
-                            <span class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-brandDark animate-pulse"></span>
+                        <li class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl">
+                            <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-brandLime"><i class="fas fa-key"></i></div>
+                            <div><p class="font-bold text-white">${m.plat}</p><p class="text-[10px] text-gray-400">${m.merk}</p></div>
                         </li>`;
                 });
-            } else { rentedListHTML = `<li class="text-center text-gray-400 text-xs py-4">Semua unit di garasi.</li>`; }
+            } else { rentedListHTML = `<li class="text-gray-400 text-xs text-center mt-6">Semua unit di garasi.</li>`; }
             document.getElementById('dash-rented-list').innerHTML = rentedListHTML;
 
+            // Transaksi Terkini
             const recentTrx = [...dbTransaksi].reverse().slice(0, 4);
             let recentTrxHTML = '';
             if (recentTrx.length > 0) {
                 recentTrx.forEach(t => {
-                    let badge = t.status === 'Berjalan' ? '<span class="bg-brandDark text-white px-2 py-1 rounded text-[9px] md:text-[10px] font-bold">Aktif</span>' : '<span class="bg-gray-100 text-gray-400 px-2 py-1 rounded text-[9px] md:text-[10px] font-bold border border-gray-200">Selesai</span>';
+                    let st = t.status === 'Berjalan' ? 'text-brandLime' : 'text-gray-300';
                     recentTrxHTML += `
-                        <tr class="hover:bg-white transition border-b border-gray-50 last:border-0">
-                            <td class="py-3 px-1 font-bold text-gray-800">${t.pelanggan} <div class="font-normal text-[9px] md:text-[10px] text-gray-400">${t.tgl}</div></td>
-                            <td class="py-3 px-1 text-gray-600">${t.platMobil}</td>
-                            <td class="py-3 px-1 font-bold text-brandDark text-right">Rp ${t.total.toLocaleString()}</td>
-                            <td class="py-3 px-1 text-right">${badge}</td>
+                        <tr class="group">
+                            <td class="py-4 px-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-brandLime/10 group-hover:text-brandLime transition"><i class="fas fa-user text-xs"></i></div>
+                                    <div><p class="font-bold text-brandDark leading-tight">${t.pelanggan}</p><p class="text-[10px] text-gray-400">${t.tgl}</p></div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-2 font-bold text-gray-600">${t.platMobil}</td>
+                            <td class="py-4 px-2 text-right font-black text-brandDark">Rp ${t.total.toLocaleString()}</td>
+                            <td class="py-4 px-2 text-right"><i class="fas fa-circle text-[8px] ${st}"></i></td>
                         </tr>`;
                 });
-            } else { recentTrxHTML = `<tr><td colspan="4" class="py-8 text-center text-gray-400">Belum ada penyewaan.</td></tr>`; }
+            } else { recentTrxHTML = `<tr><td colspan="4" class="py-8 text-center text-gray-400 text-sm">Belum ada aktivitas penyewaan.</td></tr>`; }
             document.getElementById('dash-recent-trx').innerHTML = recentTrxHTML;
 
             // Master Mobil
             let mobilHTML = '';
             dbMobil.forEach(m => {
-                let badge = m.status === 'Tersedia' ? '<span class="bg-green-50 text-green-700 px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold border border-green-200">Tersedia</span>' : '<span class="bg-brandDark text-white px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold">Disewa</span>';
+                let badge = m.status === 'Tersedia' ? '<span class="bg-green-50 text-green-600 px-3 py-1.5 rounded-lg text-[10px] font-bold">Tersedia</span>' : '<span class="bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg text-[10px] font-bold">Disewa</span>';
                 mobilHTML += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-3 md:p-4 font-bold text-gray-900">${m.plat}</td><td class="p-3 md:p-4 text-gray-600">${m.merk}</td>
-                        <td class="p-3 md:p-4 font-semibold text-gray-700">Rp ${m.harga.toLocaleString()}</td><td class="p-3 md:p-4">${badge}</td>
-                        <td class="p-3 md:p-4 text-right"><button onclick="hapusMobil('${m.fbKey}')" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-trash"></i></button></td>
+                    <tr>
+                        <td class="py-4 px-2">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400"><i class="fas fa-car-side"></i></div>
+                                <div><p class="font-bold text-brandDark">${m.plat}</p><p class="text-[10px] text-gray-400">${m.merk}</p></div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-2 font-black text-brandDark">Rp ${m.harga.toLocaleString()}</td>
+                        <td class="py-4 px-2">${badge}</td>
+                        <td class="py-4 px-2 text-right"><button onclick="hapusMobil('${m.fbKey}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center ml-auto hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash text-xs"></i></button></td>
                     </tr>`;
             });
             document.getElementById('tabel-mobil').innerHTML = mobilHTML;
@@ -535,16 +602,20 @@
             // Master Transaksi
             let trxHTML = '';
             dbTransaksi.forEach(t => {
-                let badge = t.status === 'Berjalan' ? '<span class="bg-brandDark text-white px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold">Aktif</span>' : '<span class="bg-gray-100 text-gray-400 px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold border border-gray-200">Selesai</span>';
+                let badge = t.status === 'Berjalan' ? '<span class="bg-brandLime/20 text-brandDark px-3 py-1.5 rounded-lg text-[10px] font-bold">Aktif</span>' : '<span class="bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg text-[10px] font-bold">Selesai</span>';
                 let btnSelesai = t.status === 'Berjalan' 
-                    ? `<button onclick="selesaiSewa('${t.fbKey}', '${t.platMobil}')" class="bg-brandNeon text-black px-3 md:px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold hover:bg-[#a6db00] transition shadow-sm">Selesai</button>` 
-                    : `<span class="text-gray-300 text-[10px] md:text-xs font-bold"><i class="fas fa-check mr-1"></i> Tuntas</span>`;
+                    ? `<button onclick="selesaiSewa('${t.fbKey}', '${t.platMobil}')" class="bg-brandDark text-white px-4 py-2 rounded-xl text-[10px] font-bold hover:bg-black transition shadow-md">Tandai Selesai</button>` 
+                    : `<span class="text-gray-300 text-xs font-bold"><i class="fas fa-check-circle mr-1"></i></span>`;
                 trxHTML += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-3 md:p-4"><div class="font-bold text-gray-900">${t.id}</div><div class="text-[9px] md:text-[10px] text-gray-400">${t.tgl}</div></td>
-                        <td class="p-3 md:p-4 font-medium text-gray-700">${t.pelanggan}</td><td class="p-3 md:p-4 text-gray-600">${t.platMobil}</td>
-                        <td class="p-3 md:p-4 font-bold text-brandDark">Rp ${t.total.toLocaleString()}</td>
-                        <td class="p-3 md:p-4">${badge}</td><td class="p-3 md:p-4 text-right">${btnSelesai}</td>
+                    <tr>
+                        <td class="py-4 px-2">
+                            <p class="font-bold text-brandDark">${t.id}</p><p class="text-[10px] text-gray-400">${t.tgl}</p>
+                        </td>
+                        <td class="py-4 px-2 font-bold text-gray-600">${t.pelanggan}</td>
+                        <td class="py-4 px-2 font-bold text-gray-600">${t.platMobil}</td>
+                        <td class="py-4 px-2 font-black text-brandDark">Rp ${t.total.toLocaleString()}</td>
+                        <td class="py-4 px-2">${badge}</td>
+                        <td class="py-4 px-2 text-right">${btnSelesai}</td>
                     </tr>`;
             });
             document.getElementById('tabel-transaksi').innerHTML = trxHTML;
@@ -554,14 +625,25 @@
                 let pegHTML = '';
                 for (let userKey in dbUsers) {
                     let u = dbUsers[userKey];
-                    let rBadge = u.role === 'pemilik' ? '<span class="text-brandNeon font-bold text-[10px] md:text-xs bg-brandDark px-2 py-1 rounded-md">Owner</span>' : '<span class="text-gray-500 font-bold text-[10px] md:text-xs border border-gray-200 px-2 py-1 rounded-md">Admin</span>';
-                    let btnHapus = (userKey === session.username) ? `<span class="text-gray-300 text-[10px] md:text-xs italic">Anda</span>` : `<button onclick="hapusPegawai('${userKey}')" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>`;
-                    pegHTML += `<tr class="hover:bg-gray-50"><td class="p-3 md:p-4 font-bold text-gray-900">@${userKey}</td><td class="p-3 md:p-4 text-gray-700">${u.name}</td><td class="p-3 md:p-4">${rBadge}</td><td class="p-3 md:p-4 text-right">${btnHapus}</td></tr>`;
+                    let rBadge = u.role === 'pemilik' ? '<span class="text-brandDark bg-brandLime px-3 py-1.5 rounded-lg text-[10px] font-bold">Owner</span>' : '<span class="text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg text-[10px] font-bold">Admin</span>';
+                    let btnHapus = (userKey === session.username) ? `<span class="text-gray-300 text-xs italic font-medium">Akun Saat Ini</span>` : `<button onclick="hapusPegawai('${userKey}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center ml-auto hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash text-xs"></i></button>`;
+                    pegHTML += `
+                        <tr>
+                            <td class="py-4 px-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-brandDark font-bold border border-gray-100">${u.name.charAt(0).toUpperCase()}</div>
+                                    <div><p class="font-bold text-brandDark">@${userKey}</p><p class="text-[10px] text-gray-400">${u.name}</p></div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-2">${rBadge}</td>
+                            <td class="py-4 px-2 text-right">${btnHapus}</td>
+                        </tr>`;
                 }
                 document.getElementById('tabel-pegawai').innerHTML = pegHTML;
             }
         }
 
+        // --- Logika CRUD ---
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function openModalMobil() { document.getElementById('modal-add-mobil').classList.remove('hidden'); }
         function simpanMobil() {
@@ -573,30 +655,30 @@
                 closeModal('modal-add-mobil');
             } else alert("Lengkapi form!");
         }
-        function hapusMobil(fbKey) { if(confirm("Hapus permanen?")) db.ref('mobil/' + fbKey).remove(); }
+        function hapusMobil(fbKey) { if(confirm("Hapus armada ini permanen?")) db.ref('mobil/' + fbKey).remove(); }
 
         function openModalTrx() {
             const sel = document.getElementById('input-pilih-mobil');
-            sel.innerHTML = '<option value="">-- Pilih Kendaraan Tersedia --</option>';
+            sel.innerHTML = '<option value="" disabled selected>Pilih kendaraan...</option>';
             let ada = false;
             dbMobil.forEach(m => {
                 if(m.status === 'Tersedia') { sel.innerHTML += `<option value="${m.plat}" data-key="${m.fbKey}" data-harga="${m.harga}">${m.merk} (${m.plat})</option>`; ada = true; }
             });
-            if(!ada) sel.innerHTML = '<option value="">Kosong</option>';
+            if(!ada) sel.innerHTML = '<option value="" disabled>Kosong</option>';
             document.getElementById('modal-add-trx').classList.remove('hidden');
         }
         function simpanTransaksi() {
             let p = document.getElementById('input-pelanggan').value, h = document.getElementById('input-hari').value, sel = document.getElementById('input-pilih-mobil');
-            if(!sel.value) return alert("Pilih unit!");
+            if(!sel.value) return alert("Pilih kendaraan dari daftar!");
             let plat = sel.value, mKey = sel.options[sel.selectedIndex].getAttribute('data-key'), harga = sel.options[sel.selectedIndex].getAttribute('data-harga');
             if(p && h) {
                 db.ref('transaksi').push({ id: 'INV-' + Math.floor(Math.random()*9000+1000), tgl: new Date().toLocaleDateString('id-ID'), pelanggan: p, platMobil: plat, total: parseInt(h)*parseInt(harga), status: 'Berjalan' });
                 db.ref('mobil/' + mKey).update({ status: 'Disewa' });
                 closeModal('modal-add-trx');
-            } else alert("Lengkapi form!");
+            } else alert("Lengkapi data pelanggan & durasi!");
         }
         function selesaiSewa(trxKey, plat) {
-            if(confirm("Tandai selesai?")) {
+            if(confirm("Pastikan kendaraan sudah dikembalikan. Tandai selesai?")) {
                 db.ref('transaksi/' + trxKey).update({ status: 'Selesai' });
                 let m = dbMobil.find(x => x.plat === plat);
                 if(m) db.ref('mobil/' + m.fbKey).update({ status: 'Tersedia' });
@@ -607,32 +689,32 @@
         function simpanPegawai() {
             let n = document.getElementById('input-peg-nama').value, u = document.getElementById('input-peg-user').value, p = document.getElementById('input-peg-pass').value, r = document.getElementById('input-peg-role').value;
             if(n && u && p) {
-                if(dbUsers[u]) return alert("Username terpakai!");
+                if(dbUsers[u]) return alert("Username sudah digunakan!");
                 db.ref('users/' + u).set({ name: n, password: p, role: r });
                 closeModal('modal-add-pegawai');
             }
         }
-        function hapusPegawai(userKey) { if(confirm(`Hapus @${userKey}?`)) db.ref('users/' + userKey).remove(); }
+        function hapusPegawai(userKey) { if(confirm(`Yakin mencabut akses untuk @${userKey}?`)) db.ref('users/' + userKey).remove(); }
 
         function showDetail(type) {
             document.getElementById('detail-modal').classList.remove('hidden');
             const tbody = document.getElementById('modal-tbody'), thead = document.getElementById('modal-thead');
             let html = '', head = '';
             if (type === 'omset') {
-                document.getElementById('modal-title').innerText = "Rincian Pendapatan";
-                head = `<tr><th class="p-3 md:p-4 font-medium">ID</th><th class="p-3 md:p-4 font-medium">Pelanggan</th><th class="p-3 md:p-4 font-medium">Plat</th><th class="p-3 md:p-4 font-medium text-right">Total</th></tr>`;
-                dbTransaksi.forEach(t => { html += `<tr class="hover:bg-gray-50"><td class="p-3 md:p-4 font-bold text-gray-900">${t.id}</td><td class="p-3 md:p-4 text-gray-600">${t.pelanggan}</td><td class="p-3 md:p-4 text-gray-600">${t.platMobil}</td><td class="p-3 md:p-4 font-bold text-brandDark text-right">Rp ${t.total.toLocaleString()}</td></tr>`; });
+                document.getElementById('modal-title').innerText = "Rincian Transaksi";
+                head = `<tr><th class="py-4 px-2 font-bold">Faktur</th><th class="py-4 px-2 font-bold">Pelanggan</th><th class="py-4 px-2 font-bold text-right">Nilai Sewa</th></tr>`;
+                dbTransaksi.forEach(t => { html += `<tr><td class="py-4 px-2"><p class="font-bold text-brandDark">${t.id}</p><p class="text-[10px] text-gray-400">${t.tgl}</p></td><td class="py-4 px-2 font-medium">${t.pelanggan}</td><td class="py-4 px-2 font-black text-brandDark text-right">Rp ${t.total.toLocaleString()}</td></tr>`; });
             } else {
                 let data = dbMobil;
-                if(type === 'ready') { document.getElementById('modal-title').innerText = "Unit Tersedia"; data = dbMobil.filter(m => m.status === 'Tersedia'); }
-                else if(type === 'rented') { document.getElementById('modal-title').innerText = "Unit Disewa"; data = dbMobil.filter(m => m.status === 'Disewa'); }
-                else document.getElementById('modal-title').innerText = "Total Armada";
+                if(type === 'ready') { document.getElementById('modal-title').innerText = "Unit di Garasi"; data = dbMobil.filter(m => m.status === 'Tersedia'); }
+                else if(type === 'rented') { document.getElementById('modal-title').innerText = "Unit Sedang Disewa"; data = dbMobil.filter(m => m.status === 'Disewa'); }
+                else document.getElementById('modal-title').innerText = "Database Armada";
                 
-                head = `<tr><th class="p-3 md:p-4 font-medium">Plat</th><th class="p-3 md:p-4 font-medium">Merek</th><th class="p-3 md:p-4 font-medium text-right">Tarif</th></tr>`;
-                data.forEach(m => { html += `<tr class="hover:bg-gray-50"><td class="p-3 md:p-4 font-bold text-gray-900">${m.plat}</td><td class="p-3 md:p-4 text-gray-600">${m.merk}</td><td class="p-3 md:p-4 font-semibold text-gray-700 text-right">Rp ${m.harga.toLocaleString()}</td></tr>`; });
+                head = `<tr><th class="py-4 px-2 font-bold">Kendaraan</th><th class="py-4 px-2 font-bold text-right">Tarif Dasar</th></tr>`;
+                data.forEach(m => { html += `<tr><td class="py-4 px-2"><p class="font-bold text-brandDark">${m.plat}</p><p class="text-[10px] text-gray-400">${m.merk}</p></td><td class="py-4 px-2 font-black text-brandDark text-right">Rp ${m.harga.toLocaleString()}</td></tr>`; });
             }
             document.getElementById('modal-thead').innerHTML = head;
-            tbody.innerHTML = html || `<tr><td colspan="4" class="py-8 text-center text-gray-400 text-sm">Belum ada data</td></tr>`;
+            tbody.innerHTML = html || `<tr><td colspan="2" class="py-10 text-center text-gray-400 font-medium">Data tidak ditemukan</td></tr>`;
         }
     </script>
 </body>
