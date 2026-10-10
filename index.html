@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoRent Pro | Modern UI</title>
+    <title>AutoRent Pro | Modern UI & Cloud DB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -81,12 +81,10 @@
         
         <!-- TOP NAVIGATION BAR -->
         <nav class="flex justify-between items-center px-6 md:px-10 py-5 flex-shrink-0">
-            <!-- Logo -->
             <div class="text-xl font-medium tracking-wide flex items-center gap-2">
                 <i class="fas fa-asterisk text-brandNeon"></i> AutoRent
             </div>
             
-            <!-- Center Menu (Pill Shape) Desktop -->
             <div class="hidden md:flex bg-brandCard rounded-full p-1 border border-gray-800 items-center justify-center">
                 <button onclick="changeMenu('dashboard')" id="nav-dashboard" class="nav-btn bg-brandNeon text-black font-bold px-6 py-2 rounded-full text-sm transition shadow-sm">Dashboard</button>
                 <button onclick="changeMenu('mobil')" id="nav-mobil" class="nav-btn text-gray-400 hover:text-white px-6 py-2 rounded-full font-medium text-sm transition">Armada</button>
@@ -94,7 +92,6 @@
                 <button onclick="changeMenu('pegawai')" id="nav-pegawai" class="nav-btn text-gray-400 hover:text-white px-6 py-2 rounded-full font-medium text-sm transition hidden">Pegawai</button>
             </div>
 
-            <!-- Profile & Mobile Menu -->
             <div class="flex items-center gap-4">
                 <div class="hidden md:block text-right">
                     <div class="text-sm font-bold truncate w-32" id="user-name">Nama</div>
@@ -123,7 +120,7 @@
                 <h1 class="text-3xl md:text-4xl font-light tracking-wide" id="page-title">Dashboard</h1>
             </div>
 
-            <!-- DASHBOARD METRICS (Only visible when Dashboard is active) -->
+            <!-- DASHBOARD METRICS -->
             <div id="dashboard-metrics" class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 block">
                 <div onclick="showDetail('total')" class="bg-brandCard rounded-[2rem] p-6 border border-gray-800 hover:border-brandNeon transition cursor-pointer flex flex-col justify-between h-36 relative overflow-hidden">
                     <span class="text-gray-400 text-xs md:text-sm font-medium z-10">Total Armada</span>
@@ -154,14 +151,46 @@
         <!-- BOTTOM WHITE CONTENT AREA -->
         <main class="bg-white rounded-t-[2.5rem] p-6 md:p-10 flex-1 text-gray-900 w-full overflow-y-auto custom-scrollbar shadow-inner relative">
             
-            <!-- Dashboard Info Content -->
+            <!-- Dashboard Info Content Baru -->
             <div id="sec-dashboard" class="content-section block">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold">Ringkasan Sistem</h3>
-                </div>
-                <div class="bg-gray-50 border border-gray-200 rounded-3xl p-8 text-center text-gray-500">
-                    <i class="fas fa-chart-line text-4xl mb-3 text-gray-300"></i>
-                    <p>Silakan klik salah satu kotak metrik gelap di atas untuk melihat rincian data secara spesifik.</p>
+                <h3 class="text-xl font-bold mb-6 text-gray-800">Ikhtisar Operasional</h3>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Kolom Kiri: Transaksi Terakhir -->
+                    <div class="lg:col-span-2 bg-gray-50 border border-gray-100 rounded-[2rem] p-6 shadow-sm">
+                        <div class="flex justify-between items-center mb-5">
+                            <h4 class="font-bold text-gray-800">Kontrak Sewa Terbaru</h4>
+                            <button onclick="changeMenu('transaksi')" class="text-xs bg-brandDark text-brandNeon font-bold px-4 py-2 rounded-full hover:bg-gray-800 transition shadow">Lihat Semua</button>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left text-sm border-collapse min-w-[500px]">
+                                <thead class="text-gray-400 text-xs uppercase border-b border-gray-200">
+                                    <tr><th class="pb-3 font-medium">Pelanggan</th><th class="pb-3 font-medium">Unit Mobil</th><th class="pb-3 font-medium text-right">Nilai</th><th class="pb-3 font-medium text-right">Status</th></tr>
+                                </thead>
+                                <tbody id="dash-recent-trx" class="divide-y divide-gray-100">
+                                    <!-- Diisi oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Kolom Kanan: Utilitas & Unit Keluar -->
+                    <div class="bg-gray-50 border border-gray-100 rounded-[2rem] p-6 shadow-sm flex flex-col">
+                        <h4 class="font-bold text-gray-800 mb-4">Utilitas Armada</h4>
+                        
+                        <!-- Progress Bar Visual -->
+                        <div class="w-full bg-gray-200 rounded-full h-3 mb-2 flex overflow-hidden shadow-inner" id="dash-progress-bar">
+                            <!-- Diisi oleh JS -->
+                        </div>
+                        <div class="flex justify-between text-xs font-bold text-gray-500 mb-8" id="dash-progress-text">
+                            <!-- Diisi oleh JS -->
+                        </div>
+
+                        <h4 class="font-bold text-gray-800 mb-3 text-sm border-b border-gray-200 pb-2">Sedang Disewa (On Duty)</h4>
+                        <ul id="dash-rented-list" class="space-y-3 flex-1 overflow-y-auto max-h-48 custom-scrollbar pr-2 text-sm text-gray-600">
+                            <!-- Diisi oleh JS -->
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -218,21 +247,18 @@
                     </table>
                 </div>
             </div>
-
         </main>
     </div>
 
     <!-- ================= KUMPULAN MODAL (POP-UP) ================= -->
-    
-    <!-- Modal Container Base Style -->
     <style> .custom-modal-box { @apply bg-white rounded-[2rem] shadow-2xl w-full max-w-md modal-enter p-8; } </style>
 
     <!-- Modal Detail Dashboard -->
     <div id="detail-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-brandDark bg-opacity-80 backdrop-blur-sm p-4">
         <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl flex flex-col max-h-[80vh] modal-enter overflow-hidden">
-            <div class="p-8 border-b border-gray-100 flex justify-between items-center">
+            <div class="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="text-2xl font-bold text-brandDark" id="modal-title">Rincian Data</h3>
-                <button onclick="closeModal('detail-modal')" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition"><i class="fas fa-times"></i></button>
+                <button onclick="closeModal('detail-modal')" class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition shadow-sm"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
                 <table class="w-full text-left border-collapse min-w-[500px]">
@@ -254,7 +280,7 @@
             </div>
             <div class="mt-8 flex gap-3">
                 <button onclick="closeModal('modal-add-mobil')" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl hover:bg-gray-200 transition">Batal</button>
-                <button onclick="simpanMobil()" class="flex-1 bg-brandDark text-white font-bold py-3 rounded-2xl hover:bg-gray-800 transition">Simpan</button>
+                <button onclick="simpanMobil()" class="flex-1 bg-brandDark text-white font-bold py-3 rounded-2xl hover:bg-gray-800 transition shadow">Simpan</button>
             </div>
         </div>
     </div>
@@ -265,14 +291,14 @@
             <div class="space-y-5">
                 <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Pelanggan</label><input type="text" id="input-pelanggan" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brandNeon outline-none"></div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Pilih Unit (Hanya yg Tersedia)</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Pilih Unit Tersedia</label>
                     <select id="input-pilih-mobil" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brandNeon outline-none appearance-none"></select>
                 </div>
                 <div><label class="block text-xs font-bold text-gray-400 uppercase mb-2">Durasi (Hari)</label><input type="number" id="input-hari" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brandNeon outline-none"></div>
             </div>
             <div class="mt-8 flex gap-3">
                 <button onclick="closeModal('modal-add-trx')" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl hover:bg-gray-200 transition">Batal</button>
-                <button onclick="simpanTransaksi()" class="flex-1 bg-brandNeon text-black font-bold py-3 rounded-2xl hover:bg-[#a6db00] transition">Proses</button>
+                <button onclick="simpanTransaksi()" class="flex-1 bg-brandNeon text-black font-bold py-3 rounded-2xl hover:bg-[#a6db00] transition shadow">Proses</button>
             </div>
         </div>
     </div>
@@ -281,17 +307,17 @@
         <div class="custom-modal-box">
             <h3 class="text-2xl font-bold text-brandDark mb-6">Tambah Akses</h3>
             <div class="space-y-5">
-                <input type="text" id="input-peg-nama" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Nama Karyawan">
-                <input type="text" id="input-peg-user" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Username Log-in">
-                <input type="password" id="input-peg-pass" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Password Sistem">
-                <select id="input-peg-role" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none appearance-none">
+                <input type="text" id="input-peg-nama" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-brandDark" placeholder="Nama Karyawan">
+                <input type="text" id="input-peg-user" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-brandDark" placeholder="Username Log-in">
+                <input type="password" id="input-peg-pass" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-brandDark" placeholder="Password Sistem">
+                <select id="input-peg-role" class="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none appearance-none focus:ring-2 focus:ring-brandDark">
                     <option value="admin">Admin Operasional</option>
                     <option value="pemilik">Pemilik (Full Access)</option>
                 </select>
             </div>
             <div class="mt-8 flex gap-3">
                 <button onclick="closeModal('modal-add-pegawai')" class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-2xl transition">Batal</button>
-                <button onclick="simpanPegawai()" class="flex-1 bg-brandDark text-white font-bold py-3 rounded-2xl transition">Berikan Akses</button>
+                <button onclick="simpanPegawai()" class="flex-1 bg-brandDark text-white font-bold py-3 rounded-2xl transition shadow">Simpan</button>
             </div>
         </div>
     </div>
@@ -406,24 +432,20 @@
         }
 
         function changeMenu(menuName) {
-            // Sembunyikan semua konten & reset style tombol
             document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.nav-btn').forEach(el => {
                 el.classList.remove('bg-brandNeon', 'text-black', 'font-bold', 'shadow-sm');
                 el.classList.add('text-gray-400');
             });
             
-            // Tampilkan yang dipilih
             document.getElementById('sec-' + menuName).classList.remove('hidden');
             
-            // Highlight Desktop Menu
             let activeBtn = document.getElementById('nav-' + menuName);
             if(activeBtn) {
                 activeBtn.classList.remove('text-gray-400');
                 activeBtn.classList.add('bg-brandNeon', 'text-black', 'font-bold', 'shadow-sm');
             }
 
-            // Atur Judul dan Metrik
             const titles = { 'dashboard': 'Dashboard', 'mobil': 'Armada', 'transaksi': 'Transaksi', 'pegawai': 'Pegawai' };
             document.getElementById('page-title').innerText = titles[menuName];
             
@@ -432,8 +454,6 @@
             } else {
                 document.getElementById('dashboard-metrics').classList.add('hidden');
             }
-            
-            // Tutup menu mobile
             document.getElementById('mobile-menu').classList.add('hidden');
         }
 
@@ -449,6 +469,55 @@
             document.getElementById('stat-mobil-rented').innerText = dbMobil.length - mobilReady;
             document.getElementById('stat-pendapatan').innerText = 'Rp ' + dbTransaksi.reduce((sum, trx) => sum + trx.total, 0).toLocaleString('id-ID');
 
+            // ================= WIDGET DASHBOARD BARU =================
+            const totalMobil = dbMobil.length;
+            const rentedCount = totalMobil - mobilReady;
+            const persentaseSewa = totalMobil > 0 ? Math.round((rentedCount / totalMobil) * 100) : 0;
+            const persentaseTersedia = totalMobil > 0 ? 100 - persentaseSewa : 0;
+            
+            document.getElementById('dash-progress-bar').innerHTML = `
+                <div style="width: ${persentaseTersedia}%" class="bg-green-400 h-full"></div>
+                <div style="width: ${persentaseSewa}%" class="bg-brandDark h-full"></div>
+            `;
+            document.getElementById('dash-progress-text').innerHTML = `
+                <span class="text-green-600">${persentaseTersedia}% Siap di Garasi</span>
+                <span class="text-gray-800">${persentaseSewa}% Disewa</span>
+            `;
+
+            const rentedCars = dbMobil.filter(m => m.status === 'Disewa');
+            let rentedListHTML = '';
+            if (rentedCars.length > 0) {
+                rentedCars.forEach(m => {
+                    rentedListHTML += `
+                        <li class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500"><i class="fas fa-car-side text-xs"></i></div>
+                                <div><p class="font-bold text-gray-800 text-xs">${m.plat}</p><p class="text-[10px] text-gray-400">${m.merk}</p></div>
+                            </div>
+                            <span class="w-2 h-2 rounded-full bg-brandDark animate-pulse"></span>
+                        </li>`;
+                });
+            } else { rentedListHTML = `<li class="text-center text-gray-400 text-xs py-4">Semua unit berada di garasi.</li>`; }
+            document.getElementById('dash-rented-list').innerHTML = rentedListHTML;
+
+            const recentTrx = [...dbTransaksi].reverse().slice(0, 4);
+            let recentTrxHTML = '';
+            if (recentTrx.length > 0) {
+                recentTrx.forEach(t => {
+                    let badge = t.status === 'Berjalan' ? '<span class="bg-brandDark text-white px-2 py-1 rounded-md text-[10px] font-bold">Aktif</span>' : '<span class="bg-gray-100 text-gray-400 px-2 py-1 rounded-md text-[10px] font-bold border border-gray-200">Selesai</span>';
+                    recentTrxHTML += `
+                        <tr class="hover:bg-white transition">
+                            <td class="py-3 font-bold text-gray-800">${t.pelanggan} <div class="font-normal text-[10px] text-gray-400">${t.tgl}</div></td>
+                            <td class="py-3 text-gray-600">${t.platMobil}</td>
+                            <td class="py-3 font-bold text-brandDark text-right">Rp ${t.total.toLocaleString()}</td>
+                            <td class="py-3 text-right">${badge}</td>
+                        </tr>`;
+                });
+            } else { recentTrxHTML = `<tr><td colspan="4" class="py-8 text-center text-gray-400">Belum ada aktivitas penyewaan.</td></tr>`; }
+            document.getElementById('dash-recent-trx').innerHTML = recentTrxHTML;
+            // ================= END WIDGET =================
+
+            // Tabel Master Mobil
             let mobilHTML = '';
             dbMobil.forEach(m => {
                 let badge = m.status === 'Tersedia' ? '<span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold border border-gray-200">Tersedia</span>' : '<span class="bg-brandDark text-white px-3 py-1 rounded-full text-xs font-bold">Disewa</span>';
@@ -461,11 +530,12 @@
             });
             document.getElementById('tabel-mobil').innerHTML = mobilHTML;
 
+            // Tabel Master Transaksi
             let trxHTML = '';
             dbTransaksi.forEach(t => {
                 let badge = t.status === 'Berjalan' ? '<span class="bg-brandDark text-white px-3 py-1 rounded-full text-xs font-bold">Aktif</span>' : '<span class="bg-gray-100 text-gray-400 px-3 py-1 rounded-full text-xs font-bold border border-gray-200">Selesai</span>';
                 let btnSelesai = t.status === 'Berjalan' 
-                    ? `<button onclick="selesaiSewa('${t.fbKey}', '${t.platMobil}')" class="bg-brandNeon text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#a6db00] transition">Selesai</button>` 
+                    ? `<button onclick="selesaiSewa('${t.fbKey}', '${t.platMobil}')" class="bg-brandNeon text-black px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#a6db00] transition shadow-sm">Selesai</button>` 
                     : `<span class="text-gray-300 text-xs font-bold"><i class="fas fa-check mr-1"></i> Tuntas</span>`;
                 trxHTML += `
                     <tr>
@@ -477,11 +547,12 @@
             });
             document.getElementById('tabel-transaksi').innerHTML = trxHTML;
 
+            // Tabel Pegawai
             if (isPemilik) {
                 let pegHTML = '';
                 for (let userKey in dbUsers) {
                     let u = dbUsers[userKey];
-                    let rBadge = u.role === 'pemilik' ? '<span class="text-brandNeon font-bold text-xs bg-brandDark px-2 py-1 rounded-md">Owner</span>' : '<span class="text-gray-500 font-bold text-xs">Admin</span>';
+                    let rBadge = u.role === 'pemilik' ? '<span class="text-brandNeon font-bold text-xs bg-brandDark px-2 py-1 rounded-md">Owner</span>' : '<span class="text-gray-500 font-bold text-xs border border-gray-200 px-2 py-1 rounded-md">Admin</span>';
                     let btnHapus = (userKey === session.username) ? `<span class="text-gray-300 text-xs italic">Anda</span>` : `<button onclick="hapusPegawai('${userKey}')" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>`;
                     pegHTML += `<tr><td class="py-4 font-bold text-gray-900">@${userKey}</td><td class="py-4">${u.name}</td><td class="py-4">${rBadge}</td><td class="py-4 text-right">${btnHapus}</td></tr>`;
                 }
@@ -489,6 +560,7 @@
             }
         }
 
+        // --- Logika CRUD Firebase ---
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function openModalMobil() { document.getElementById('modal-add-mobil').classList.remove('hidden'); }
         function simpanMobil() {
@@ -548,7 +620,7 @@
             if (type === 'omset') {
                 document.getElementById('modal-title').innerText = "Rincian Pendapatan";
                 head = `<tr><th class="py-4 font-medium">ID</th><th class="py-4 font-medium">Pelanggan</th><th class="py-4 font-medium">Plat</th><th class="py-4 font-medium text-right">Total</th></tr>`;
-                dbTransaksi.forEach(t => { html += `<tr><td class="py-4 font-bold text-gray-900">${t.id}</td><td class="py-4">${t.pelanggan}</td><td class="py-4">${t.platMobil}</td><td class="py-4 font-bold text-gray-900 text-right">Rp ${t.total.toLocaleString()}</td></tr>`; });
+                dbTransaksi.forEach(t => { html += `<tr class="hover:bg-gray-50"><td class="py-4 font-bold text-gray-900">${t.id}</td><td class="py-4">${t.pelanggan}</td><td class="py-4">${t.platMobil}</td><td class="py-4 font-bold text-gray-900 text-right">Rp ${t.total.toLocaleString()}</td></tr>`; });
             } else {
                 let data = dbMobil;
                 if(type === 'ready') { document.getElementById('modal-title').innerText = "Unit Tersedia"; data = dbMobil.filter(m => m.status === 'Tersedia'); }
@@ -556,7 +628,7 @@
                 else document.getElementById('modal-title').innerText = "Total Armada";
                 
                 head = `<tr><th class="py-4 font-medium">Plat</th><th class="py-4 font-medium">Merek</th><th class="py-4 font-medium text-right">Tarif</th></tr>`;
-                data.forEach(m => { html += `<tr><td class="py-4 font-bold text-gray-900">${m.plat}</td><td class="py-4">${m.merk}</td><td class="py-4 font-semibold text-right">Rp ${m.harga.toLocaleString()}</td></tr>`; });
+                data.forEach(m => { html += `<tr class="hover:bg-gray-50"><td class="py-4 font-bold text-gray-900">${m.plat}</td><td class="py-4">${m.merk}</td><td class="py-4 font-semibold text-right">Rp ${m.harga.toLocaleString()}</td></tr>`; });
             }
             document.getElementById('modal-thead').innerHTML = head;
             tbody.innerHTML = html || `<tr><td colspan="4" class="py-8 text-center text-gray-400">Belum ada data</td></tr>`;
