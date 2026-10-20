@@ -2,306 +2,165 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AutoRent Pro | Premium UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoRent | Sistem Manajemen Rental Mobil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- Konfigurasi Tema Tailwind -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        appBg: '#F2F7F2', /* Latar belakang hijau sangat pucat */
-                        brandDark: '#17191A', /* Hitam pekat untuk kartu & nav mobile */
-                        brandLime: '#C4F340', /* Hijau neon untuk tombol & aksen */
-                    },
-                    fontFamily: { sans: ['Inter', 'sans-serif'], }
+                    colors: { brand: '#0F172A', brandLight: '#1E293B', accent: '#10B981', appBg: '#F8FAFC' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { -webkit-tap-highlight-color: transparent; }
-        .modal-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+        body { background-color: #F8FAFC; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .modal-enter { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-appBg font-sans text-gray-800 min-h-screen">
+<body class="font-sans text-gray-800 h-screen flex overflow-hidden">
 
-    <!-- ================= HALAMAN AUTENTIKASI ================= -->
-    <div id="auth-page" class="fixed inset-0 z-[100] flex items-center justify-center bg-appBg overflow-y-auto p-4">
-        <div class="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] w-full max-w-md border border-gray-100">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-brandLime rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brandLime/30 transform rotate-3">
-                    <i class="fas fa-car-side text-2xl text-brandDark -rotate-3"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-brandDark">AutoRent</h2>
-                <p class="text-gray-500 text-sm mt-1" id="auth-subtitle">Menghubungkan sistem...</p>
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-brand text-white flex flex-col hidden md:flex flex-shrink-0 shadow-2xl z-20">
+        <div class="p-6 flex items-center gap-3 border-b border-gray-800">
+            <div class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white text-xl font-black shadow-lg">
+                <i class="fas fa-car-side"></i>
             </div>
-            
-            <div id="auth-alert" class="hidden p-4 rounded-2xl mb-6 text-sm text-center font-bold"></div>
-
-            <!-- Login Form -->
-            <div id="form-login" class="space-y-4">
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase ml-2">Username</label>
-                    <input type="text" id="login-username" class="w-full mt-1 px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Masukkan username" disabled>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-400 uppercase ml-2">Password</label>
-                    <input type="password" id="login-password" class="w-full mt-1 px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="••••••••" disabled>
-                </div>
-                <button id="btn-login" onclick="prosesLogin()" class="w-full bg-brandDark text-white font-bold text-lg py-4 rounded-2xl hover:bg-black transition mt-2 shadow-xl shadow-brandDark/20 opacity-50 cursor-not-allowed" disabled>Masuk</button>
-                <p class="text-center mt-6 text-sm text-gray-500">Karyawan baru? <button onclick="toggleAuth('register')" class="text-brandDark font-bold hover:text-brandLime transition">Daftar Akun</button></p>
-            </div>
-
-            <!-- Register Form -->
-            <div id="form-register" class="space-y-4 hidden">
-                <input type="text" id="reg-name" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Nama Lengkap">
-                <input type="text" id="reg-username" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Username Baru">
-                <input type="password" id="reg-password" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Password">
-                <select id="reg-role" class="w-full px-5 py-3.5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium appearance-none">
-                    <option value="admin">Admin Operasional</option>
-                    <option value="pemilik">Pemilik (Full Access)</option>
-                </select>
-                <button onclick="prosesRegister()" class="w-full bg-brandLime text-brandDark font-bold py-4 rounded-2xl hover:bg-[#b0de36] transition shadow-lg mt-2">Daftar Sekarang</button>
-                <p class="text-center mt-4 text-sm text-gray-500">Sudah ada akun? <button onclick="toggleAuth('login')" class="text-brandDark font-bold">Login</button></p>
+            <div>
+                <h1 class="font-black text-lg leading-tight tracking-wide">AutoRent</h1>
+                <p class="text-[10px] text-gray-400 font-bold uppercase">Management System</p>
             </div>
         </div>
-    </div>
-
-    <!-- ================= HALAMAN UTAMA APLIKASI ================= -->
-    <div id="main-app" class="hidden flex-col md:flex-row min-h-screen pb-24 md:pb-0">
-        
-        <!-- DESKTOP SIDEBAR -->
-        <aside class="hidden md:flex flex-col w-72 bg-white fixed h-full z-10 px-8 py-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-            <div class="flex items-center gap-3 mb-12">
-                <div class="w-10 h-10 bg-brandLime rounded-xl flex items-center justify-center shadow-sm">
-                    <i class="fas fa-car text-brandDark"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-brandDark tracking-tight">AutoRent</h2>
-            </div>
-
-            <div class="mb-10">
-                <p class="text-gray-400 text-sm font-medium">Welcome Back,</p>
-                <h3 class="text-2xl font-bold text-brandDark mt-1 truncate" id="desk-user-name">Nama User!</h3>
-                <div class="mt-2 inline-block px-3 py-1 bg-brandLime/20 text-brandDark text-xs font-bold rounded-lg capitalize" id="desk-user-role">Role</div>
-            </div>
-
-            <nav class="flex flex-col gap-2 flex-1">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider mt-4">Menu Utama</p>
-                <button onclick="changeMenu('dashboard')" id="nav-desk-dashboard" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl bg-brandDark text-white font-bold transition">
-                    <i class="fas fa-border-all w-5"></i> Dashboard
-                </button>
-                <button onclick="changeMenu('mobil')" id="nav-desk-mobil" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 font-semibold transition">
-                    <i class="fas fa-car-side w-5"></i> Armada
-                </button>
-                <button onclick="changeMenu('transaksi')" id="nav-desk-transaksi" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 font-semibold transition">
-                    <i class="fas fa-receipt w-5"></i> Transaksi
-                </button>
-                <button onclick="changeMenu('pegawai')" id="nav-desk-pegawai" class="desk-nav-btn flex items-center gap-4 px-5 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 font-semibold transition hidden">
-                    <i class="fas fa-users w-5"></i> Pegawai
-                </button>
-            </nav>
-
-            <button onclick="prosesLogout()" class="mt-auto flex items-center gap-4 px-5 py-3.5 rounded-2xl text-red-500 hover:bg-red-50 font-bold transition">
-                <i class="fas fa-sign-out-alt w-5"></i> Keluar Sistem
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 px-3">Menu Utama</p>
+            <button onclick="switchMenu('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-800 text-white font-bold transition">
+                <i class="fas fa-chart-pie w-5 text-center text-accent"></i> Dashboard
             </button>
-        </aside>
-
-        <!-- MOBILE FLOATING BOTTOM NAV (Sangat User Friendly untuk HP) -->
-        <nav class="md:hidden fixed bottom-5 left-1/2 transform -translate-x-1/2 w-[92%] bg-brandDark rounded-[2rem] p-2 flex justify-between items-center shadow-[0_20px_40px_rgba(0,0,0,0.3)] z-40">
-            <button onclick="changeMenu('dashboard')" id="nav-mob-dashboard" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-brandLime transition">
-                <i class="fas fa-border-all text-xl mb-1"></i><span class="text-[9px] font-bold">Home</span>
+            <button onclick="switchMenu('armada')" id="nav-armada" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white font-medium transition">
+                <i class="fas fa-car w-5 text-center"></i> Armada Mobil
             </button>
-            <button onclick="changeMenu('mobil')" id="nav-mob-mobil" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-gray-500 hover:text-gray-300 transition">
-                <i class="fas fa-car-side text-xl mb-1"></i><span class="text-[9px] font-bold">Armada</span>
+            <button onclick="switchMenu('transaksi')" id="nav-transaksi" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white font-medium transition">
+                <i class="fas fa-file-contract w-5 text-center"></i> Transaksi Sewa
             </button>
-            <button onclick="changeMenu('transaksi')" id="nav-mob-transaksi" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-gray-500 hover:text-gray-300 transition">
-                <i class="fas fa-receipt text-xl mb-1"></i><span class="text-[9px] font-bold">Transaksi</span>
-            </button>
-            <button onclick="changeMenu('pegawai')" id="nav-mob-pegawai" class="mob-nav-btn relative flex-1 flex flex-col items-center justify-center py-2 text-gray-500 hover:text-gray-300 transition hidden">
-                <i class="fas fa-users text-xl mb-1"></i><span class="text-[9px] font-bold">Pegawai</span>
-            </button>
-            <button onclick="prosesLogout()" class="relative flex flex-col items-center justify-center py-2 px-4 text-gray-500 hover:text-red-400 transition border-l border-gray-700 ml-1">
-                <i class="fas fa-power-off text-xl"></i>
+            <button onclick="switchMenu('riwayat')" id="nav-riwayat" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white font-medium transition">
+                <i class="fas fa-history w-5 text-center"></i> Riwayat & Laporan
             </button>
         </nav>
+    </aside>
 
-        <!-- AREA KONTEN UTAMA -->
-        <main class="flex-1 md:ml-72 p-5 md:p-10 w-full max-w-[1400px] mx-auto">
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col h-full relative">
+        
+        <!-- HEADER MOBILE -->
+        <header class="md:hidden bg-brand text-white p-4 flex justify-between items-center shadow-md z-20">
+            <div class="flex items-center gap-3"><i class="fas fa-car-side text-2xl text-accent"></i><div><h1 class="font-black text-sm">AutoRent</h1></div></div>
+            <button class="text-white text-xl"><i class="fas fa-bars"></i></button>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 w-full pb-20 md:pb-8">
             
-            <!-- Mobile Header Profile -->
-            <header class="md:hidden flex justify-between items-center mb-6 bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-brandDark text-brandLime flex items-center justify-center font-bold" id="mob-user-initial">A</div>
-                    <div>
-                        <p class="text-xs text-gray-400 font-medium">Hello,</p>
-                        <h3 class="text-sm font-bold text-gray-800" id="mob-user-name">Nama</h3>
-                    </div>
+            <!-- ================= SECTION 1: DASHBOARD ================= -->
+            <div id="sec-dashboard" class="content-section block space-y-6">
+                <div>
+                    <h2 class="text-2xl font-black text-gray-800">Ringkasan Bisnis</h2>
+                    <p class="text-sm text-gray-500 mt-1">Pantauan performa penyewaan dan status armada terkini.</p>
                 </div>
-                <div class="bg-brandLime/20 text-brandDark px-3 py-1.5 rounded-xl text-[10px] font-bold capitalize" id="mob-user-role">Role</div>
-            </header>
 
-            <!-- Bagian Atas Halaman -->
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl md:text-3xl font-bold text-brandDark" id="page-title">Financial Overview</h1>
-                <div class="hidden md:flex gap-2">
-                    <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-500 hover:text-brandDark shadow-sm"><i class="fas fa-bell"></i></button>
-                </div>
-            </div>
-
-            <!-- ================= DASHBOARD CONTENT ================= -->
-            <div id="sec-dashboard" class="content-section block space-y-6 md:space-y-8">
-                
-                <!-- Metrics Grid 2x2 di HP, 4x1 di Desktop -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                    <!-- Card 1 -->
-                    <div onclick="showDetail('total')" class="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between h-32 md:h-40">
-                        <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2"><i class="fas fa-layer-group"></i></div>
-                        <div>
-                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Total Armada</p>
-                            <h3 class="text-2xl md:text-3xl font-black text-brandDark mt-1" id="stat-total-mobil">0</h3>
-                        </div>
+                <!-- METRIK UTAMA -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-4">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 border-b-4 border-b-blue-500">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-xl"><i class="fas fa-car"></i></div>
+                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Total Armada</p><h3 class="text-xl font-black text-gray-800" id="dash-total">0</h3></div>
                     </div>
-                    <!-- Card 2 -->
-                    <div onclick="showDetail('ready')" class="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between h-32 md:h-40">
-                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center mb-2"><i class="fas fa-check"></i></div>
-                        <div>
-                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Di Garasi</p>
-                            <h3 class="text-2xl md:text-3xl font-black text-brandDark mt-1" id="stat-mobil-ready">0</h3>
-                        </div>
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 border-b-4 border-b-green-500 cursor-pointer hover:bg-green-50" onclick="switchMenu('armada')">
+                        <div class="w-12 h-12 rounded-xl bg-green-50 text-green-500 flex items-center justify-center text-xl"><i class="fas fa-check-circle"></i></div>
+                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Tersedia (Ready)</p><h3 class="text-xl font-black text-green-600" id="dash-ready">0</h3></div>
                     </div>
-                    <!-- Card 3 -->
-                    <div onclick="showDetail('rented')" class="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between h-32 md:h-40">
-                        <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mb-2"><i class="fas fa-key"></i></div>
-                        <div>
-                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Disewa (Aktif)</p>
-                            <h3 class="text-2xl md:text-3xl font-black text-brandDark mt-1" id="stat-mobil-rented">0</h3>
-                        </div>
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 border-b-4 border-b-orange-500 cursor-pointer hover:bg-orange-50" onclick="switchMenu('transaksi')">
+                        <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-xl"><i class="fas fa-key"></i></div>
+                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Sedang Disewa</p><h3 class="text-xl font-black text-orange-600" id="dash-rented">0</h3></div>
                     </div>
-                    <!-- Card 4 (Dark / Premium Card) -->
-                    <div onclick="showDetail('omset')" class="bg-brandDark rounded-[2rem] p-5 md:p-6 shadow-[0_10px_30px_rgba(23,25,26,0.15)] transition cursor-pointer flex flex-col justify-between h-32 md:h-40 relative overflow-hidden group">
-                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-brandLime/20 transition duration-500"></div>
-                        <div class="flex justify-between items-start z-10">
-                            <div class="w-10 h-10 rounded-full bg-white/10 text-brandLime flex items-center justify-center"><i class="fas fa-wallet"></i></div>
-                            <span class="bg-brandLime text-brandDark text-[9px] md:text-[10px] font-bold px-2 py-1 rounded-md">Bulan Ini</span>
-                        </div>
-                        <div class="z-10 mt-2">
-                            <p class="text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">Omset Pendapatan</p>
-                            <h3 class="text-xl md:text-3xl font-black text-white mt-1 truncate" id="stat-pendapatan">Rp 0</h3>
-                        </div>
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 border-b-4 border-b-brand">
+                        <div class="w-12 h-12 rounded-xl bg-gray-100 text-brand flex items-center justify-center text-xl"><i class="fas fa-wallet"></i></div>
+                        <div><p class="text-[10px] font-bold text-gray-400 uppercase">Estimasi Omset Bulan Ini</p><h3 class="text-sm md:text-base font-black text-gray-800" id="dash-omset">Rp 0</h3></div>
                     </div>
                 </div>
 
-                <!-- Bagian Bawah Dashboard -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
-                    <!-- Transaksi Terakhir -->
-                    <div class="lg:col-span-2 bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold text-brandDark">Aktivitas Sewa Terkini</h3>
-                            <button onclick="changeMenu('transaksi')" class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-brandLime hover:text-brandDark transition"><i class="fas fa-arrow-right"></i></button>
-                        </div>
-                        <div class="overflow-x-auto hide-scrollbar">
-                            <table class="w-full text-left border-collapse min-w-[500px]">
-                                <tbody id="dash-recent-trx" class="divide-y divide-gray-50 text-sm"></tbody>
-                            </table>
-                        </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col">
+                        <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-50"><h3 class="font-bold text-sm text-gray-800">Sewa Berjalan (Aktif)</h3><button onclick="switchMenu('transaksi')" class="text-[10px] font-bold text-accent hover:underline">Kelola Transaksi</button></div>
+                        <div class="flex-1 overflow-x-auto hide-scrollbar"><table class="w-full text-left text-xs md:text-sm"><tbody id="dash-active-rentals" class="divide-y divide-gray-50 text-gray-700"></tbody></table></div>
                     </div>
-
-                    <!-- Status Armada -->
-                    <div class="bg-brandDark rounded-[2rem] p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col text-white">
-                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-brandLime/10 rounded-full blur-3xl"></div>
-                        
-                        <div class="flex justify-between items-center mb-6 z-10">
-                            <h3 class="text-lg font-bold">Utilitas Armada</h3>
-                            <i class="fas fa-chart-pie text-brandLime opacity-80"></i>
-                        </div>
-                        
-                        <div class="z-10 mb-8">
-                            <div class="flex justify-between text-xs font-bold mb-2">
-                                <span class="text-gray-400">Total Digunakan</span>
-                                <span class="text-brandLime" id="dash-progress-pct">0%</span>
-                            </div>
-                            <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden flex">
-                                <div id="dash-progress-bar" class="bg-brandLime h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 z-10">Unit On-Duty</h4>
-                        <ul id="dash-rented-list" class="space-y-3 z-10 flex-1 overflow-y-auto hide-scrollbar max-h-40 text-sm"></ul>
+                    <div class="bg-brandLight rounded-2xl p-6 shadow-xl text-white relative overflow-hidden flex flex-col justify-center">
+                        <i class="fas fa-car-side absolute -right-10 -bottom-10 text-8xl text-brand opacity-50"></i>
+                        <h3 class="font-black text-xl mb-2 z-10">Transaksi Cepat</h3>
+                        <p class="text-xs text-gray-400 mb-6 z-10 max-w-sm">Buat pesanan sewa baru dengan cepat. Pastikan memeriksa ketersediaan armada terlebih dahulu.</p>
+                        <button onclick="bukaModalTransaksi()" class="z-10 bg-accent text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-emerald-600 transition shadow-lg w-max flex items-center gap-2"><i class="fas fa-plus-circle"></i> Buat Pesanan Baru</button>
                     </div>
                 </div>
             </div>
 
-            <!-- ================= MOBIL (ARMADA) ================= -->
-            <div id="sec-mobil" class="content-section hidden">
-                <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <div class="relative w-full sm:w-64">
-                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" placeholder="Cari mobil..." class="w-full bg-gray-50 rounded-2xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brandLime transition">
-                        </div>
-                        <button onclick="openModalMobil()" class="w-full sm:w-auto bg-brandDark text-brandLime font-bold px-6 py-3 rounded-2xl hover:bg-black transition shadow-lg flex items-center justify-center gap-2">
-                            <i class="fas fa-plus"></i> Unit Baru
-                        </button>
+            <!-- ================= SECTION 2: ARMADA MOBIL ================= -->
+            <div id="sec-armada" class="content-section hidden space-y-6">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div><h2 class="text-2xl font-black text-gray-800">Database Armada</h2><p class="text-sm text-gray-500 mt-1">Kelola data kendaraan dan tarif sewa per hari.</p></div>
+                    <button onclick="bukaModalMobil()" class="w-full lg:w-auto bg-brand text-white px-4 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition shadow-md flex items-center justify-center gap-2 text-sm"><i class="fas fa-plus"></i> Tambah Mobil</button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-4 border-b border-gray-50 flex gap-3 bg-gray-50/50">
+                        <div class="relative flex-1"><i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i><input type="text" id="search-mobil" onkeyup="renderTabelMobil()" placeholder="Cari Plat, Merk, atau Model..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand text-sm"></div>
+                        <select id="filter-status-mobil" onchange="renderTabelMobil()" class="py-2.5 px-4 rounded-xl border border-gray-200 focus:outline-none focus:border-brand text-sm bg-white font-medium"><option value="ALL">Semua Status</option><option value="Tersedia">Tersedia</option><option value="Disewa">Sedang Disewa</option></select>
                     </div>
-                    <div class="overflow-x-auto hide-scrollbar">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
-                            <thead class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100">
-                                <tr><th class="py-4 px-2">Kendaraan</th><th class="py-4 px-2">Tarif Harian</th><th class="py-4 px-2">Status</th><th class="py-4 px-2 text-right">Aksi</th></tr>
-                            </thead>
-                            <tbody id="tabel-mobil" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 border-b border-gray-100 text-gray-500"><tr><th class="p-4 font-bold">Plat Nomor</th><th class="p-4 font-bold">Mobil</th><th class="p-4 font-bold">Tahun</th><th class="p-4 font-bold text-right">Tarif / Hari</th><th class="p-4 font-bold text-center">Status</th><th class="p-4 font-bold text-center">Aksi</th></tr></thead>
+                            <tbody id="tabel-mobil" class="divide-y divide-gray-50 font-medium text-gray-700"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- ================= TRANSAKSI ================= -->
-            <div id="sec-transaksi" class="content-section hidden">
-                <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <h3 class="text-lg font-bold text-brandDark hidden sm:block">Daftar Kontrak</h3>
-                        <button onclick="openModalTrx()" class="w-full sm:w-auto bg-brandLime text-brandDark font-bold px-6 py-3 rounded-2xl hover:bg-[#b0de36] transition shadow-lg flex items-center justify-center gap-2">
-                            <i class="fas fa-file-signature"></i> Buat Sewa Baru
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto hide-scrollbar">
-                        <table class="w-full text-left border-collapse min-w-[700px]">
-                            <thead class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100">
-                                <tr><th class="py-4 px-2">Transaksi</th><th class="py-4 px-2">Pelanggan</th><th class="py-4 px-2">Unit</th><th class="py-4 px-2">Total Harga</th><th class="py-4 px-2">Status</th><th class="py-4 px-2 text-right">Aksi</th></tr>
-                            </thead>
-                            <tbody id="tabel-transaksi" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
+            <!-- ================= SECTION 3: TRANSAKSI SEWA ================= -->
+            <div id="sec-transaksi" class="content-section hidden space-y-6">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div><h2 class="text-2xl font-black text-gray-800">Transaksi Sewa Aktif</h2><p class="text-sm text-gray-500 mt-1">Kelola mobil yang sedang dibawa pelanggan.</p></div>
+                    <button onclick="bukaModalTransaksi()" class="w-full lg:w-auto bg-accent text-white px-4 py-2.5 rounded-xl font-bold hover:bg-emerald-600 transition shadow-md flex items-center justify-center gap-2 text-sm"><i class="fas fa-file-contract"></i> Buat Pesanan</button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 border-b border-gray-100 text-gray-500"><tr><th class="p-4 font-bold">ID Transaksi</th><th class="p-4 font-bold">Pelanggan</th><th class="p-4 font-bold">Mobil (Plat)</th><th class="p-4 font-bold">Periode Sewa</th><th class="p-4 font-bold text-right">Total Biaya</th><th class="p-4 font-bold text-center">Penyelesaian</th></tr></thead>
+                            <tbody id="tabel-transaksi" class="divide-y divide-gray-50 font-medium text-gray-700"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- ================= PEGAWAI ================= -->
-            <div id="sec-pegawai" class="content-section hidden">
-                <div class="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                        <h3 class="text-lg font-bold text-brandDark hidden sm:block">Manajemen Akses</h3>
-                        <button onclick="openModalPegawai()" class="w-full sm:w-auto bg-brandDark text-white font-bold px-6 py-3 rounded-2xl hover:bg-black transition shadow-lg flex items-center justify-center gap-2">
-                            <i class="fas fa-user-plus text-brandLime"></i> Tambah Akun
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto hide-scrollbar">
-                        <table class="w-full text-left border-collapse min-w-[500px]">
-                            <thead class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100">
-                                <tr><th class="py-4 px-2">User Info</th><th class="py-4 px-2">Role Akses</th><th class="py-4 px-2 text-right">Manajemen</th></tr>
-                            </thead>
-                            <tbody id="tabel-pegawai" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
+            <!-- ================= SECTION 4: RIWAYAT ================= -->
+            <div id="sec-riwayat" class="content-section hidden space-y-6">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div><h2 class="text-2xl font-black text-gray-800">Riwayat & Laporan</h2><p class="text-sm text-gray-500 mt-1">Data historis penyewaan yang sudah selesai.</p></div>
+                    <button onclick="exportRiwayatExcel()" class="w-full lg:w-auto bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 text-sm"><i class="fas fa-file-excel"></i> Export Rekap</button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-gray-50 border-b border-gray-100 text-gray-500"><tr><th class="p-4 font-bold">Tanggal Selesai</th><th class="p-4 font-bold">Pelanggan</th><th class="p-4 font-bold">Mobil</th><th class="p-4 font-bold text-center">Durasi</th><th class="p-4 font-bold text-right">Pendapatan</th></tr></thead>
+                            <tbody id="tabel-riwayat" class="divide-y divide-gray-50 font-medium text-gray-700"></tbody>
                         </table>
                     </div>
                 </div>
@@ -310,411 +169,169 @@
         </main>
     </div>
 
-    <!-- ================= MODALS ================= -->
-    <style> .modal-box { @apply bg-white rounded-[2.5rem] shadow-2xl w-[92%] md:w-full max-w-md modal-enter p-6 md:p-8 border border-gray-100; } </style>
-
-    <!-- Detail Modal -->
-    <div id="detail-modal" class="hidden fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] modal-enter mb-16 md:mb-0">
-            <div class="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-xl font-bold text-brandDark" id="modal-title">Rincian</h3>
-                <button onclick="closeModal('detail-modal')" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"><i class="fas fa-times"></i></button>
+    <!-- MODAL TAMBAH MOBIL -->
+    <div id="modal-mobil" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand/50 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl modal-enter overflow-hidden">
+            <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+                <h3 class="font-black text-gray-800 text-lg">Data Mobil Baru</h3>
+                <button onclick="tutupModalMobil()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="p-6 md:p-8 overflow-y-auto hide-scrollbar flex-1">
-                <div class="overflow-x-auto hide-scrollbar">
-                    <table class="w-full text-left border-collapse min-w-[400px]">
-                        <thead id="modal-thead" class="text-gray-400 text-xs font-bold uppercase tracking-wider border-b border-gray-100"></thead>
-                        <tbody id="modal-tbody" class="text-sm divide-y divide-gray-50 text-gray-800 font-medium"></tbody>
-                    </table>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Plat Nomor</label><input type="text" id="inp-plat" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand font-bold uppercase text-sm" placeholder="B 1234 ABC"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Tahun</label><input type="number" id="inp-tahun" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand text-sm" placeholder="YYYY"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Merk</label><input type="text" id="inp-merk" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand text-sm font-medium" placeholder="Toyota, Honda..."></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Model / Tipe</label><input type="text" id="inp-model" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand text-sm font-medium" placeholder="Avanza, Brio..."></div>
+                </div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Tarif Sewa / Hari (Rp)</label><input type="number" id="inp-harga" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-brand text-sm font-black text-brand" placeholder="300000"></div>
+            </div>
+            <div class="p-5 border-t border-gray-50 bg-gray-50 flex gap-3">
+                <button onclick="tutupModalMobil()" class="flex-1 bg-white border border-gray-200 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-100 transition text-sm">Batal</button>
+                <button onclick="simpanMobil()" class="flex-1 bg-brand text-white font-bold py-3.5 rounded-xl hover:bg-gray-800 transition text-sm shadow-lg">Simpan Mobil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BUAT PESANAN -->
+    <div id="modal-transaksi" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-brand/50 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl modal-enter overflow-hidden">
+            <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+                <h3 class="font-black text-gray-800 text-lg">Buat Pesanan Sewa</h3>
+                <button onclick="tutupModalTransaksi()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Nama Penyewa</label><input type="text" id="trx-nama" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-accent text-sm font-bold" placeholder="Nama Lengkap KTP"></div>
+                <div><label class="block text-xs font-bold text-gray-500 mb-1">Pilih Mobil Tersedia</label><select id="trx-mobil" onchange="kalkulasiBiaya()" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-accent text-sm bg-white font-medium"></select></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Tanggal Ambil</label><input type="date" id="trx-mulai" onchange="kalkulasiBiaya()" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-accent text-sm"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 mb-1">Tanggal Kembali</label><input type="date" id="trx-selesai" onchange="kalkulasiBiaya()" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-accent text-sm"></div>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex justify-between items-center">
+                    <div><p class="text-xs font-bold text-emerald-700">Total Tagihan</p><p class="text-[10px] text-emerald-600" id="trx-durasi">0 Hari</p></div>
+                    <h2 class="text-xl font-black text-emerald-700" id="trx-total">Rp 0</h2>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Add Mobil -->
-    <div id="modal-add-mobil" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
-        <div class="modal-box">
-            <h3 class="text-2xl font-bold text-brandDark mb-6">Unit Baru</h3>
-            <div class="space-y-4">
-                <input type="text" id="input-plat" class="w-full px-5 py-4 bg-gray-50 rounded-2xl uppercase focus:ring-2 focus:ring-brandLime outline-none font-bold text-brandDark" placeholder="PLAT NOMOR (Cth: B1234CD)">
-                <input type="text" id="input-merk" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Merek & Tipe">
-                <input type="number" id="input-harga" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Tarif Per Hari (Rp)">
-            </div>
-            <div class="mt-8 flex gap-3">
-                <button onclick="closeModal('modal-add-mobil')" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl transition">Batal</button>
-                <button onclick="simpanMobil()" class="flex-1 bg-brandDark text-brandLime font-bold py-4 rounded-2xl shadow-xl hover:bg-black transition">Simpan</button>
+            <div class="p-5 border-t border-gray-50 bg-gray-50 flex gap-3">
+                <button onclick="tutupModalTransaksi()" class="w-1/3 bg-white border border-gray-200 text-gray-600 font-bold py-3.5 rounded-xl hover:bg-gray-100 transition text-sm">Batal</button>
+                <button onclick="simpanTransaksi()" class="w-2/3 bg-accent text-white font-bold py-3.5 rounded-xl hover:bg-emerald-600 transition text-sm shadow-lg">Proses Pesanan</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Transaksi -->
-    <div id="modal-add-trx" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
-        <div class="modal-box">
-            <h3 class="text-2xl font-bold text-brandDark mb-6">Buat Kontrak</h3>
-            <div class="space-y-4">
-                <input type="text" id="input-pelanggan" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Nama Pelanggan">
-                <select id="input-pilih-mobil" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none appearance-none font-medium"></select>
-                <input type="number" id="input-hari" class="w-full px-5 py-4 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-brandLime outline-none font-medium" placeholder="Lama Sewa (Hari)">
-            </div>
-            <div class="mt-8 flex gap-3">
-                <button onclick="closeModal('modal-add-trx')" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl transition">Batal</button>
-                <button onclick="simpanTransaksi()" class="flex-1 bg-brandLime text-brandDark font-bold py-4 rounded-2xl shadow-xl hover:bg-[#b0de36] transition">Proses Sewa</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Pegawai -->
-    <div id="modal-add-pegawai" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-brandDark/40 backdrop-blur-sm p-4">
-        <div class="modal-box">
-            <h3 class="text-2xl font-bold text-brandDark mb-6">Akses Sistem</h3>
-            <div class="space-y-4">
-                <input type="text" id="input-peg-nama" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Nama Lengkap">
-                <input type="text" id="input-peg-user" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Username">
-                <input type="password" id="input-peg-pass" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-brandLime font-medium" placeholder="Password">
-                <select id="input-peg-role" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none appearance-none focus:ring-2 focus:ring-brandLime font-medium">
-                    <option value="admin">Admin Operasional</option>
-                    <option value="pemilik">Pemilik (Full Access)</option>
-                </select>
-            </div>
-            <div class="mt-8 flex gap-3">
-                <button onclick="closeModal('modal-add-pegawai')" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl transition">Batal</button>
-                <button onclick="simpanPegawai()" class="flex-1 bg-brandDark text-brandLime font-bold py-4 rounded-2xl shadow-xl transition">Simpan Akun</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= JAVASCRIPT: LOGIKA & FIREBASE ================= -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBDBfVdpDACXFMoxiuYSSUj8WAvHBAXs4w",
-            authDomain: "rental-portofolio.firebaseapp.com",
-            databaseURL: "https://rental-portofolio-default-rtdb.firebaseio.com",
-            projectId: "rental-portofolio"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyBDBfVdpDACXFMoxiuYSSUj8WAvHBAXs4w", authDomain: "rental-portofolio.firebaseapp.com", databaseURL: "https://rental-portofolio-default-rtdb.firebaseio.com", projectId: "rental-portofolio" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        let dbCars = [], dbRentals = [];
 
-        let dbUsers = {}, dbMobil = [], dbTransaksi = [];
+        db.ref('autorent_cars').on('value', (s) => { dbCars = Object.keys(s.val() || {}).map(k => ({ ...s.val()[k], fbKey: k })); renderData(); });
+        db.ref('autorent_trx').on('value', (s) => { dbRentals = Object.keys(s.val() || {}).map(k => ({ ...s.val()[k], fbKey: k })); renderData(); });
 
-        db.ref('users').on('value', (s) => {
-            dbUsers = s.val() || {};
-            if(Object.keys(dbUsers).length === 0) {
-                db.ref('users/admin').set({ password: '123', role: 'admin', name: 'Admin Operasional' });
-                db.ref('users/owner').set({ password: '123', role: 'pemilik', name: 'Bpk. Pemilik' });
-            }
-            bukaKunciLogin();
-            if(!document.getElementById('main-app').classList.contains('hidden')) renderDataUtama();
-        });
-
-        db.ref('mobil').on('value', (s) => {
-            dbMobil = Object.keys(s.val() || {}).map(key => ({ ...s.val()[key], fbKey: key }));
-            if(!document.getElementById('main-app').classList.contains('hidden')) renderDataUtama();
-        });
-
-        db.ref('transaksi').on('value', (s) => {
-            dbTransaksi = Object.keys(s.val() || {}).map(key => ({ ...s.val()[key], fbKey: key }));
-            if(!document.getElementById('main-app').classList.contains('hidden')) renderDataUtama();
-        });
-
-        function bukaKunciLogin() {
-            document.getElementById('auth-subtitle').innerText = "Sistem Online. Silakan login.";
-            document.getElementById('login-username').disabled = false;
-            document.getElementById('login-password').disabled = false;
-            let btn = document.getElementById('btn-login');
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            if(sessionStorage.getItem('loggedUser')) { showApp(); renderDataUtama(); }
+        function switchMenu(menuId) {
+            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden')); document.getElementById('sec-' + menuId).classList.remove('hidden');
+            document.querySelectorAll('aside nav button').forEach(el => { el.classList.remove('bg-gray-800', 'text-white'); el.classList.add('text-gray-400'); el.querySelector('i').classList.remove('text-accent'); });
+            let activeBtn = document.getElementById('nav-' + menuId);
+            if(activeBtn) { activeBtn.classList.remove('text-gray-400'); activeBtn.classList.add('bg-gray-800', 'text-white'); activeBtn.querySelector('i').classList.add('text-accent'); }
         }
 
-        function toggleAuth(mode) {
-            document.getElementById('auth-alert').classList.add('hidden');
-            if(mode === 'register') {
-                document.getElementById('form-login').classList.add('hidden');
-                document.getElementById('form-register').classList.remove('hidden');
-                document.getElementById('auth-subtitle').innerText = "Buat akses baru";
-            } else {
-                document.getElementById('form-register').classList.add('hidden');
-                document.getElementById('form-login').classList.remove('hidden');
-                document.getElementById('auth-subtitle').innerText = "Sistem Online. Silakan login.";
-            }
-        }
-
-        function showAlert(msg, isError = true) {
-            const box = document.getElementById('auth-alert');
-            box.innerText = msg;
-            box.className = `p-4 rounded-2xl mb-6 text-sm text-center font-bold block ${isError ? 'bg-red-50 text-red-500' : 'bg-brandLime/20 text-brandDark'}`;
-        }
-
-        function prosesRegister() {
-            const n = document.getElementById('reg-name').value, u = document.getElementById('reg-username').value, p = document.getElementById('reg-password').value, r = document.getElementById('reg-role').value;
-            if(!n || !u || !p) return showAlert("Semua kolom harus diisi!");
-            if(dbUsers[u]) return showAlert("Username tidak tersedia!");
-            db.ref('users/' + u).set({ name: n, password: p, role: r });
-            showAlert("Berhasil mendaftar!", false);
-            setTimeout(() => toggleAuth('login'), 1500);
-        }
-
-        function prosesLogin() {
-            const u = document.getElementById('login-username').value, p = document.getElementById('login-password').value;
-            if (dbUsers[u] && dbUsers[u].password === p) {
-                let session = dbUsers[u]; session.username = u;
-                sessionStorage.setItem('loggedUser', JSON.stringify(session));
-                showApp(); renderDataUtama();
-            } else showAlert("Kredensial salah atau tidak valid.");
-        }
-
-        function prosesLogout() {
-            sessionStorage.removeItem('loggedUser');
-            document.getElementById('main-app').classList.remove('flex', 'md:flex-row');
-            document.getElementById('main-app').classList.add('hidden');
-            document.getElementById('auth-page').classList.remove('hidden');
-            document.getElementById('login-password').value = '';
-        }
-
-        function showApp() {
-            document.getElementById('auth-page').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('main-app').classList.add('flex', 'md:flex-row');
-            
-            const session = JSON.parse(sessionStorage.getItem('loggedUser'));
-            
-            // Desktop Header Update
-            document.getElementById('desk-user-name').innerText = session.name;
-            document.getElementById('desk-user-role').innerText = session.role;
-            
-            // Mobile Header Update
-            document.getElementById('mob-user-name').innerText = session.name;
-            document.getElementById('mob-user-role').innerText = session.role;
-            document.getElementById('mob-user-initial').innerText = session.name.charAt(0).toUpperCase();
-            
-            let isPemilik = session.role === 'pemilik';
-            document.getElementById('nav-desk-pegawai').style.display = isPemilik ? 'flex' : 'none';
-            document.getElementById('nav-mob-pegawai').style.display = isPemilik ? 'flex' : 'none';
-            
-            changeMenu('dashboard');
-        }
-
-        function changeMenu(menuName) {
-            // Sembunyikan konten
-            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById('sec-' + menuName).classList.remove('hidden');
-            
-            // Reset Desktop Menu
-            document.querySelectorAll('.desk-nav-btn').forEach(el => {
-                el.classList.remove('bg-brandDark', 'text-white');
-                el.classList.add('text-gray-500');
-            });
-            let deskBtn = document.getElementById('nav-desk-' + menuName);
-            if(deskBtn) { deskBtn.classList.remove('text-gray-500'); deskBtn.classList.add('bg-brandDark', 'text-white'); }
-
-            // Reset Mobile Menu
-            document.querySelectorAll('.mob-nav-btn').forEach(el => {
-                el.classList.remove('text-brandLime');
-                el.classList.add('text-gray-500');
-            });
-            let mobBtn = document.getElementById('nav-mob-' + menuName);
-            if(mobBtn) { mobBtn.classList.remove('text-gray-500'); mobBtn.classList.add('text-brandLime'); }
-
-            const titles = { 'dashboard': 'Financial Overview', 'mobil': 'Katalog Armada', 'transaksi': 'Riwayat Kontrak', 'pegawai': 'Hak Akses' };
-            document.getElementById('page-title').innerText = titles[menuName];
-        }
-
-        function renderDataUtama() {
-            const session = JSON.parse(sessionStorage.getItem('loggedUser'));
-            if(!session) return;
-            let isPemilik = session.role === 'pemilik';
-
-            const mobilReady = dbMobil.filter(m => m.status === 'Tersedia').length;
-            document.getElementById('stat-total-mobil').innerText = dbMobil.length;
-            document.getElementById('stat-mobil-ready').innerText = mobilReady;
-            document.getElementById('stat-mobil-rented').innerText = dbMobil.length - mobilReady;
-            
-            const totalOmset = dbTransaksi.reduce((sum, trx) => sum + trx.total, 0);
-            
-            // Format angka ringkas untuk Card Dark (Misal: Rp 12.5M / Rp 450K)
-            let textOmset = 'Rp ' + totalOmset.toLocaleString('id-ID');
-            if(totalOmset >= 1000000) textOmset = 'Rp ' + (totalOmset/1000000).toFixed(1) + 'M';
-            else if(totalOmset >= 1000) textOmset = 'Rp ' + (totalOmset/1000).toFixed(0) + 'K';
-            document.getElementById('stat-pendapatan').innerText = textOmset;
-
-            // Widget Dashboard (Utilitas)
-            const totalMobil = dbMobil.length;
-            const rentedCount = totalMobil - mobilReady;
-            const persentaseSewa = totalMobil > 0 ? Math.round((rentedCount / totalMobil) * 100) : 0;
-            
-            document.getElementById('dash-progress-pct').innerText = persentaseSewa + '%';
-            document.getElementById('dash-progress-bar').style.width = persentaseSewa + '%';
-
-            const rentedCars = dbMobil.filter(m => m.status === 'Disewa');
-            let rentedListHTML = '';
-            if (rentedCars.length > 0) {
-                rentedCars.forEach(m => {
-                    rentedListHTML += `
-                        <li class="flex items-center gap-3 bg-white/5 p-3 rounded-2xl">
-                            <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-brandLime"><i class="fas fa-key"></i></div>
-                            <div><p class="font-bold text-white">${m.plat}</p><p class="text-[10px] text-gray-400">${m.merk}</p></div>
-                        </li>`;
-                });
-            } else { rentedListHTML = `<li class="text-gray-400 text-xs text-center mt-6">Semua unit di garasi.</li>`; }
-            document.getElementById('dash-rented-list').innerHTML = rentedListHTML;
-
-            // Transaksi Terkini
-            const recentTrx = [...dbTransaksi].reverse().slice(0, 4);
-            let recentTrxHTML = '';
-            if (recentTrx.length > 0) {
-                recentTrx.forEach(t => {
-                    let st = t.status === 'Berjalan' ? 'text-brandLime' : 'text-gray-300';
-                    recentTrxHTML += `
-                        <tr class="group">
-                            <td class="py-4 px-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-brandLime/10 group-hover:text-brandLime transition"><i class="fas fa-user text-xs"></i></div>
-                                    <div><p class="font-bold text-brandDark leading-tight">${t.pelanggan}</p><p class="text-[10px] text-gray-400">${t.tgl}</p></div>
-                                </div>
-                            </td>
-                            <td class="py-4 px-2 font-bold text-gray-600">${t.platMobil}</td>
-                            <td class="py-4 px-2 text-right font-black text-brandDark">Rp ${t.total.toLocaleString()}</td>
-                            <td class="py-4 px-2 text-right"><i class="fas fa-circle text-[8px] ${st}"></i></td>
-                        </tr>`;
-                });
-            } else { recentTrxHTML = `<tr><td colspan="4" class="py-8 text-center text-gray-400 text-sm">Belum ada aktivitas penyewaan.</td></tr>`; }
-            document.getElementById('dash-recent-trx').innerHTML = recentTrxHTML;
-
-            // Master Mobil
-            let mobilHTML = '';
-            dbMobil.forEach(m => {
-                let badge = m.status === 'Tersedia' ? '<span class="bg-green-50 text-green-600 px-3 py-1.5 rounded-lg text-[10px] font-bold">Tersedia</span>' : '<span class="bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg text-[10px] font-bold">Disewa</span>';
-                mobilHTML += `
-                    <tr>
-                        <td class="py-4 px-2">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400"><i class="fas fa-car-side"></i></div>
-                                <div><p class="font-bold text-brandDark">${m.plat}</p><p class="text-[10px] text-gray-400">${m.merk}</p></div>
-                            </div>
-                        </td>
-                        <td class="py-4 px-2 font-black text-brandDark">Rp ${m.harga.toLocaleString()}</td>
-                        <td class="py-4 px-2">${badge}</td>
-                        <td class="py-4 px-2 text-right"><button onclick="hapusMobil('${m.fbKey}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center ml-auto hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash text-xs"></i></button></td>
-                    </tr>`;
-            });
-            document.getElementById('tabel-mobil').innerHTML = mobilHTML;
-
-            // Master Transaksi
-            let trxHTML = '';
-            dbTransaksi.forEach(t => {
-                let badge = t.status === 'Berjalan' ? '<span class="bg-brandLime/20 text-brandDark px-3 py-1.5 rounded-lg text-[10px] font-bold">Aktif</span>' : '<span class="bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg text-[10px] font-bold">Selesai</span>';
-                let btnSelesai = t.status === 'Berjalan' 
-                    ? `<button onclick="selesaiSewa('${t.fbKey}', '${t.platMobil}')" class="bg-brandDark text-white px-4 py-2 rounded-xl text-[10px] font-bold hover:bg-black transition shadow-md">Tandai Selesai</button>` 
-                    : `<span class="text-gray-300 text-xs font-bold"><i class="fas fa-check-circle mr-1"></i></span>`;
-                trxHTML += `
-                    <tr>
-                        <td class="py-4 px-2">
-                            <p class="font-bold text-brandDark">${t.id}</p><p class="text-[10px] text-gray-400">${t.tgl}</p>
-                        </td>
-                        <td class="py-4 px-2 font-bold text-gray-600">${t.pelanggan}</td>
-                        <td class="py-4 px-2 font-bold text-gray-600">${t.platMobil}</td>
-                        <td class="py-4 px-2 font-black text-brandDark">Rp ${t.total.toLocaleString()}</td>
-                        <td class="py-4 px-2">${badge}</td>
-                        <td class="py-4 px-2 text-right">${btnSelesai}</td>
-                    </tr>`;
-            });
-            document.getElementById('tabel-transaksi').innerHTML = trxHTML;
-
-            // Master Pegawai
-            if (isPemilik) {
-                let pegHTML = '';
-                for (let userKey in dbUsers) {
-                    let u = dbUsers[userKey];
-                    let rBadge = u.role === 'pemilik' ? '<span class="text-brandDark bg-brandLime px-3 py-1.5 rounded-lg text-[10px] font-bold">Owner</span>' : '<span class="text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg text-[10px] font-bold">Admin</span>';
-                    let btnHapus = (userKey === session.username) ? `<span class="text-gray-300 text-xs italic font-medium">Akun Saat Ini</span>` : `<button onclick="hapusPegawai('${userKey}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center ml-auto hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash text-xs"></i></button>`;
-                    pegHTML += `
-                        <tr>
-                            <td class="py-4 px-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-brandDark font-bold border border-gray-100">${u.name.charAt(0).toUpperCase()}</div>
-                                    <div><p class="font-bold text-brandDark">@${userKey}</p><p class="text-[10px] text-gray-400">${u.name}</p></div>
-                                </div>
-                            </td>
-                            <td class="py-4 px-2">${rBadge}</td>
-                            <td class="py-4 px-2 text-right">${btnHapus}</td>
-                        </tr>`;
-                }
-                document.getElementById('tabel-pegawai').innerHTML = pegHTML;
-            }
-        }
-
-        // --- Logika CRUD ---
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function openModalMobil() { document.getElementById('modal-add-mobil').classList.remove('hidden'); }
+        // ================= CRUD MOBIL =================
+        function bukaModalMobil() { document.getElementById('modal-mobil').classList.remove('hidden'); }
+        function tutupModalMobil() { document.getElementById('modal-mobil').classList.add('hidden'); document.getElementById('inp-plat').value=''; document.getElementById('inp-merk').value=''; document.getElementById('inp-model').value=''; document.getElementById('inp-tahun').value=''; document.getElementById('inp-harga').value=''; }
         function simpanMobil() {
-            let plat = document.getElementById('input-plat').value.toUpperCase().replace(/\s/g, '');
-            let merk = document.getElementById('input-merk').value, harga = document.getElementById('input-harga').value;
-            if (plat && merk && harga) {
-                if(dbMobil.find(m => m.plat === plat)) return alert("Plat terdaftar!");
-                db.ref('mobil').push({ plat: plat, merk: merk, harga: parseInt(harga), status: 'Tersedia' });
-                closeModal('modal-add-mobil');
-            } else alert("Lengkapi form!");
+            let plat = document.getElementById('inp-plat').value.toUpperCase().replace(/\s/g, ''), merk = document.getElementById('inp-merk').value, model = document.getElementById('inp-model').value, tahun = document.getElementById('inp-tahun').value, harga = parseInt(document.getElementById('inp-harga').value);
+            if(!plat || !merk || !model || !harga) return alert("Lengkapi data wajib!");
+            if(dbCars.find(c => c.plat === plat)) return alert("Plat nomor sudah terdaftar!");
+            db.ref('autorent_cars').push({ plat, merk, model, tahun: tahun||new Date().getFullYear(), harga, status: 'Tersedia' });
+            tutupModalMobil();
         }
-        function hapusMobil(fbKey) { if(confirm("Hapus armada ini permanen?")) db.ref('mobil/' + fbKey).remove(); }
+        function hapusMobil(key, status) { if(status==='Disewa') return alert("Mobil sedang disewa, tidak bisa dihapus!"); if(confirm("Hapus mobil ini dari armada?")) db.ref('autorent_cars/' + key).remove(); }
 
-        function openModalTrx() {
-            const sel = document.getElementById('input-pilih-mobil');
-            sel.innerHTML = '<option value="" disabled selected>Pilih kendaraan...</option>';
-            let ada = false;
-            dbMobil.forEach(m => {
-                if(m.status === 'Tersedia') { sel.innerHTML += `<option value="${m.plat}" data-key="${m.fbKey}" data-harga="${m.harga}">${m.merk} (${m.plat})</option>`; ada = true; }
-            });
-            if(!ada) sel.innerHTML = '<option value="" disabled>Kosong</option>';
-            document.getElementById('modal-add-trx').classList.remove('hidden');
+        // ================= CRUD TRANSAKSI =================
+        function bukaModalTransaksi() {
+            let opt = '<option value="">-- Pilih Mobil --</option>';
+            dbCars.filter(c => c.status === 'Tersedia').forEach(c => { opt += `<option value="${c.fbKey}" data-harga="${c.harga}">${c.merk} ${c.model} (${c.plat}) - Rp ${c.harga.toLocaleString()}/hari</option>`; });
+            document.getElementById('trx-mobil').innerHTML = opt;
+            document.getElementById('trx-nama').value = ''; document.getElementById('trx-mulai').value = ''; document.getElementById('trx-selesai').value = ''; document.getElementById('trx-total').innerText = 'Rp 0'; document.getElementById('trx-durasi').innerText = '0 Hari';
+            document.getElementById('modal-transaksi').classList.remove('hidden');
+        }
+        function tutupModalTransaksi() { document.getElementById('modal-transaksi').classList.add('hidden'); }
+        function kalkulasiBiaya() {
+            let sel = document.getElementById('trx-mobil'); let m1 = document.getElementById('trx-mulai').value; let m2 = document.getElementById('trx-selesai').value;
+            if(sel.value && m1 && m2) {
+                let harga = parseInt(sel.options[sel.selectedIndex].getAttribute('data-harga'));
+                let d1 = new Date(m1); let d2 = new Date(m2);
+                let diffTime = Math.abs(d2 - d1); let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if(diffDays === 0) diffDays = 1; // Minimal 1 hari
+                document.getElementById('trx-durasi').innerText = diffDays + ' Hari';
+                document.getElementById('trx-total').innerText = 'Rp ' + (harga * diffDays).toLocaleString();
+                document.getElementById('trx-total').setAttribute('data-val', harga * diffDays);
+            }
         }
         function simpanTransaksi() {
-            let p = document.getElementById('input-pelanggan').value, h = document.getElementById('input-hari').value, sel = document.getElementById('input-pilih-mobil');
-            if(!sel.value) return alert("Pilih kendaraan dari daftar!");
-            let plat = sel.value, mKey = sel.options[sel.selectedIndex].getAttribute('data-key'), harga = sel.options[sel.selectedIndex].getAttribute('data-harga');
-            if(p && h) {
-                db.ref('transaksi').push({ id: 'INV-' + Math.floor(Math.random()*9000+1000), tgl: new Date().toLocaleDateString('id-ID'), pelanggan: p, platMobil: plat, total: parseInt(h)*parseInt(harga), status: 'Berjalan' });
-                db.ref('mobil/' + mKey).update({ status: 'Disewa' });
-                closeModal('modal-add-trx');
-            } else alert("Lengkapi data pelanggan & durasi!");
+            let carKey = document.getElementById('trx-mobil').value, nama = document.getElementById('trx-nama').value, start = document.getElementById('trx-mulai').value, end = document.getElementById('trx-selesai').value, total = parseInt(document.getElementById('trx-total').getAttribute('data-val'));
+            if(!carKey || !nama || !start || !end || !total) return alert("Lengkapi form pesanan!");
+            let trxId = 'INV-' + Date.now().toString().slice(-6);
+            let carData = dbCars.find(c => c.fbKey === carKey);
+            db.ref('autorent_trx').push({ id: trxId, carKey, carName: `${carData.merk} ${carData.model} (${carData.plat})`, nama, start, end, total, status: 'Aktif' });
+            db.ref('autorent_cars/' + carKey).update({ status: 'Disewa' });
+            tutupModalTransaksi();
         }
-        function selesaiSewa(trxKey, plat) {
-            if(confirm("Pastikan kendaraan sudah dikembalikan. Tandai selesai?")) {
-                db.ref('transaksi/' + trxKey).update({ status: 'Selesai' });
-                let m = dbMobil.find(x => x.plat === plat);
-                if(m) db.ref('mobil/' + m.fbKey).update({ status: 'Tersedia' });
+        function selesaikanSewa(trxKey, carKey) {
+            if(confirm("Tandai sewa ini selesai dan mobil kembali tersedia?")) {
+                db.ref('autorent_trx/' + trxKey).update({ status: 'Selesai', tglKembaliRealisasi: new Date().toISOString().slice(0,10) });
+                db.ref('autorent_cars/' + carKey).update({ status: 'Tersedia' });
             }
         }
 
-        function openModalPegawai() { document.getElementById('modal-add-pegawai').classList.remove('hidden'); }
-        function simpanPegawai() {
-            let n = document.getElementById('input-peg-nama').value, u = document.getElementById('input-peg-user').value, p = document.getElementById('input-peg-pass').value, r = document.getElementById('input-peg-role').value;
-            if(n && u && p) {
-                if(dbUsers[u]) return alert("Username sudah digunakan!");
-                db.ref('users/' + u).set({ name: n, password: p, role: r });
-                closeModal('modal-add-pegawai');
-            }
-        }
-        function hapusPegawai(userKey) { if(confirm(`Yakin mencabut akses untuk @${userKey}?`)) db.ref('users/' + userKey).remove(); }
+        // ================= RENDER UI =================
+        function renderData() {
+            // Dashboard
+            document.getElementById('dash-total').innerText = dbCars.length;
+            document.getElementById('dash-ready').innerText = dbCars.filter(c => c.status === 'Tersedia').length;
+            document.getElementById('dash-rented').innerText = dbCars.filter(c => c.status === 'Disewa').length;
+            
+            let omset = 0; let activeRows = '';
+            dbRentals.forEach(t => { 
+                if(t.status === 'Aktif') activeRows += `<tr class="border-b border-gray-50 last:border-0"><td class="py-3 text-xs text-gray-500">${t.id}</td><td class="py-3 font-bold text-gray-800">${t.nama}</td><td class="py-3 text-xs text-gray-500 truncate max-w-[120px]">${t.carName}</td><td class="py-3 text-right font-black text-brand">Rp ${t.total.toLocaleString()}</td></tr>`;
+                else omset += t.total; // Omset hanya dari yang sudah selesai bulan ini (simplifikasi)
+            });
+            document.getElementById('dash-omset').innerText = 'Rp ' + omset.toLocaleString();
+            document.getElementById('dash-active-rentals').innerHTML = activeRows || '<tr><td colspan="4" class="text-center py-6 text-gray-400 text-xs">Belum ada sewa aktif.</td></tr>';
 
-        function showDetail(type) {
-            document.getElementById('detail-modal').classList.remove('hidden');
-            const tbody = document.getElementById('modal-tbody'), thead = document.getElementById('modal-thead');
-            let html = '', head = '';
-            if (type === 'omset') {
-                document.getElementById('modal-title').innerText = "Rincian Transaksi";
-                head = `<tr><th class="py-4 px-2 font-bold">Faktur</th><th class="py-4 px-2 font-bold">Pelanggan</th><th class="py-4 px-2 font-bold text-right">Nilai Sewa</th></tr>`;
-                dbTransaksi.forEach(t => { html += `<tr><td class="py-4 px-2"><p class="font-bold text-brandDark">${t.id}</p><p class="text-[10px] text-gray-400">${t.tgl}</p></td><td class="py-4 px-2 font-medium">${t.pelanggan}</td><td class="py-4 px-2 font-black text-brandDark text-right">Rp ${t.total.toLocaleString()}</td></tr>`; });
-            } else {
-                let data = dbMobil;
-                if(type === 'ready') { document.getElementById('modal-title').innerText = "Unit di Garasi"; data = dbMobil.filter(m => m.status === 'Tersedia'); }
-                else if(type === 'rented') { document.getElementById('modal-title').innerText = "Unit Sedang Disewa"; data = dbMobil.filter(m => m.status === 'Disewa'); }
-                else document.getElementById('modal-title').innerText = "Database Armada";
-                
-                head = `<tr><th class="py-4 px-2 font-bold">Kendaraan</th><th class="py-4 px-2 font-bold text-right">Tarif Dasar</th></tr>`;
-                data.forEach(m => { html += `<tr><td class="py-4 px-2"><p class="font-bold text-brandDark">${m.plat}</p><p class="text-[10px] text-gray-400">${m.merk}</p></td><td class="py-4 px-2 font-black text-brandDark text-right">Rp ${m.harga.toLocaleString()}</td></tr>`; });
-            }
-            document.getElementById('modal-thead').innerHTML = head;
-            tbody.innerHTML = html || `<tr><td colspan="2" class="py-10 text-center text-gray-400 font-medium">Data tidak ditemukan</td></tr>`;
+            // Tabel Armada
+            renderTabelMobil();
+
+            // Tabel Transaksi Aktif
+            let trxHtml = '';
+            dbRentals.filter(t => t.status === 'Aktif').forEach(t => {
+                trxHtml += `<tr class="hover:bg-gray-50 border-b border-gray-50"><td class="p-4 font-bold text-brand text-xs">${t.id}</td><td class="p-4 font-bold">${t.nama}</td><td class="p-4 text-gray-500 text-xs">${t.carName}</td><td class="p-4 text-gray-500 text-xs">${t.start} s/d ${t.end}</td><td class="p-4 text-right font-black text-brand">Rp ${t.total.toLocaleString()}</td><td class="p-4 text-center"><button onclick="selesaikanSewa('${t.fbKey}', '${t.carKey}')" class="bg-brand text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-800 transition">Selesai</button></td></tr>`;
+            }); document.getElementById('tabel-transaksi').innerHTML = trxHtml || '<tr><td colspan="6" class="text-center py-10 text-gray-400">Tidak ada transaksi berjalan.</td></tr>';
+
+            // Tabel Riwayat Selesai
+            let hstHtml = '';
+            dbRentals.filter(t => t.status === 'Selesai').reverse().forEach(t => {
+                let d1 = new Date(t.start); let d2 = new Date(t.end); let days = Math.ceil(Math.abs(d2-d1) / (1000*60*60*24));
+                hstHtml += `<tr class="hover:bg-gray-50 border-b border-gray-50"><td class="p-4 text-gray-500 text-xs">${t.tglKembaliRealisasi}</td><td class="p-4 font-bold">${t.nama}</td><td class="p-4 text-gray-500 text-xs">${t.carName}</td><td class="p-4 text-center text-xs font-bold text-gray-600">${days==0?1:days} Hari</td><td class="p-4 text-right font-black text-accent">Rp ${t.total.toLocaleString()}</td></tr>`;
+            }); document.getElementById('tabel-riwayat').innerHTML = hstHtml || '<tr><td colspan="5" class="text-center py-10 text-gray-400">Belum ada riwayat transaksi.</td></tr>';
+        }
+
+        function renderTabelMobil() {
+            let q = document.getElementById('search-mobil').value.toLowerCase(); let stat = document.getElementById('filter-status-mobil').value;
+            let filtered = dbCars.filter(c => { let mQ = c.plat.toLowerCase().includes(q) || c.merk.toLowerCase().includes(q) || c.model.toLowerCase().includes(q); let mS = stat === 'ALL' || c.status === stat; return mQ && mS; });
+            let mHtml = '';
+            filtered.forEach(c => {
+                let badge = c.status === 'Tersedia' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700';
+                mHtml += `<tr class="hover:bg-gray-50 border-b border-gray-50"><td class="p-4 font-black text-brand">${c.plat}</td><td class="p-4 font-bold text-gray-800">${c.merk} ${c.model}</td><td class="p-4 text-gray-500 text-sm">${c.tahun}</td><td class="p-4 text-right font-black text-brand">Rp ${c.harga.toLocaleString()}</td><td class="p-4 text-center"><span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase ${badge}">${c.status}</span></td><td class="p-4 text-center"><button onclick="hapusMobil('${c.fbKey}', '${c.status}')" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Hapus Mobil"><i class="fas fa-trash"></i></button></td></tr>`;
+            }); document.getElementById('tabel-mobil').innerHTML = mHtml || '<tr><td colspan="6" class="text-center py-10 text-gray-400">Tidak ada mobil ditemukan.</td></tr>';
+        }
+
+        function exportRiwayatExcel() {
+            let data = dbRentals.filter(t => t.status === 'Selesai').map(t => ({ "ID Transaksi": t.id, "Tgl Selesai": t.tglKembaliRealisasi, "Penyewa": t.nama, "Mobil": t.carName, "Pendapatan (Rp)": t.total }));
+            if(data.length === 0) return alert("Belum ada data riwayat!");
+            let ws = XLSX.utils.json_to_sheet(data); let wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Laporan Sewa"); XLSX.writeFile(wb, `Rekap_Sewa_${Date.now()}.xlsx`);
         }
     </script>
 </body>
